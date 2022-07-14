@@ -1,0 +1,33 @@
+{
+  "root": "libs/stripe",
+  "sourceRoot": "libs/stripe/src",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/stripe",
+        "tsConfig": "libs/stripe/tsconfig.lib.json",
+        "packageJson": "libs/stripe/package.json",
+        "main": "libs/stripe/src/index.ts",
+        "assets": ["libs/stripe/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/stripe/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/stripe"],
+      "options": {
+        "jestConfig": "libs/stripe/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}
