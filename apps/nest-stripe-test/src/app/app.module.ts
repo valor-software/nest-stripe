@@ -7,8 +7,8 @@ import { AppAuthGuard } from './auth.guard';
 
 @Module({
   imports: [StripeModule.configure({
-    apiKey: 'sk_test_51LLQ2WDqFfDeJ7rtjkGENsraHJBkXr7fenkNSZhQySP5NsA9KYhLxuiOmc2Xb7TYQiyzTSYxRTjb6hZVhtxfbNkR00uXlreyol',
-    webHookSignature: 'whsec_jaQ7RGYC5PdclQ5QuXBYg9zKrDuOYNT7',
+    apiKey: process.env.STRIPE_API_KEY,
+    webHookSignature: process.env.STRIPE_WEBHOOK_SIGNATURE,
     successUrl: 'http://localhost:3333/purchase-success',
     cancelUrl: 'http://localhost:3333/card'
   }, AppAuthGuard)],
