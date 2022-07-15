@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Stripe } from 'stripe';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+import { CreateCustomerResponse } from './dto/create-customer.response';
 import { CreatePaymentResponse } from './dto/create-payment.response';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -53,6 +55,22 @@ export class StripeService {
       return {
         success: false,
         errorMessage: 'Stripe: Create Checkout Session error'
+      }
+    }
+  }
+
+  async createCustomer(dto: CreateCustomerDto): Promise<CreateCustomerResponse> {
+    try {
+      const customer = await this.stripe.customers.create({
+        email: dto.email,
+        name: dto.name
+      })
+      return { customerId: customer.id, success: true };
+    } catch (exception) {
+      this.logger.error('Stripe: Create Customer error', exception);
+      return {
+        success: false,
+        errorMessage: 'Stripe: Create Customer error'
       }
     }
   }
