@@ -71,7 +71,24 @@ export class StripeService {
     try {
       const customer = await this.stripe.customers.create({
         email: dto.email,
-        name: dto.name
+        name: dto.name,
+        description: dto.description,
+        phone: dto.phone,
+        address: dto.addressLine1 || dto.addressLine2 ? {
+          line1: dto.addressLine1, line2: dto.addressLine2
+        } : null,
+        invoice_prefix: dto.invoicePrefix,
+        metadata:dto.metadata,
+        payment_method: dto.paymentMethod,
+        preferred_locales: dto.preferredLocales,
+        promotion_code: dto.promotionCode,
+        source: dto.source,
+        shipping: dto.shipping ? {
+          name: dto.shipping.name,
+          address: { line1: dto.shipping.address, line2: dto.shipping.addressLine2 },
+          phone: dto.shipping.phone
+        } : null,
+        tax_exempt: dto.taxExempt
       })
       return { customerId: customer.id, success: true };
     } catch (exception) {
