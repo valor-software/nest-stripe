@@ -26,7 +26,7 @@ export class WebhookController {
     }
   }
 
-//#region payment-intent
+  //#region payment-intent
   @ApiResponse({ type: WebhookResponse })
   @Post('/payment-intent-created')
   async paymentIntentCreated(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
@@ -62,9 +62,9 @@ export class WebhookController {
       throw new BadRequestException(error)
     }
   }
-//#endregion
+  //#endregion
 
-//#region charge
+  //#region charge
   @ApiResponse({ type: WebhookResponse })
   @Post('/charge-refunded')
   async chargeRefunded(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
@@ -100,94 +100,75 @@ export class WebhookController {
       throw new BadRequestException(error)
     }
   }
-//#endregion
+  //#endregion
 
-//#region subscription-schedule
+  //#region Invoice
   @ApiResponse({ type: WebhookResponse })
-  @Post('/subscription-schedule-aborted')
-  async subscriptionScheduleAborted(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
+  @Post('/invoice-payment_succeeded')
+  async invoicePaymentSucceeded(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
-      this.webhookService.notifySubscriptionScheduleAborted(evt);
+      const dataObject = evt.data.object;
+      if (dataObject['billing_reason'] === 'subscription_create') {
+        const subscriptionId = dataObject['subscription']
+        const paymentIntentId = dataObject['payment_intent']
+        await this.stripeService.updateDefaultSubscriptionPaymentMethodFromPaymentIntent(subscriptionId, paymentIntentId)
+      }
+      this.webhookService.notifyInvoicePaymentSucceeded(evt);
       return { success: true }
     } catch (error) {
       throw new BadRequestException(error)
     }
   }
-
   @ApiResponse({ type: WebhookResponse })
-  @Post('/subscription-schedule-canceled')
-  async subscriptionScheduleCanceled(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
+  @Post('/invoice-payment_failed')
+  async invoicePaymentFailed(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
-      this.webhookService.notifySubscriptionScheduleCanceled(evt);
+      this.webhookService.notifyInvoicePaymentFailed(evt);
       return { success: true }
     } catch (error) {
       throw new BadRequestException(error)
     }
   }
-
   @ApiResponse({ type: WebhookResponse })
-  @Post('/subscription-schedule-completed')
-  async subscriptionScheduleCompleted(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
+  @Post('/invoice-payment_finalized')
+  async invoicePaymentFinalized(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
-      this.webhookService.notifySubscriptionScheduleCompleted(evt);
+      this.webhookService.notifyInvoicePaymentFinalized(evt);
       return { success: true }
     } catch (error) {
       throw new BadRequestException(error)
     }
   }
+  //#endregion
 
+  //#region Customer Subscription
   @ApiResponse({ type: WebhookResponse })
-  @Post('/subscription-schedule-created')
-  async subscriptionScheduleCreated(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
+  @Post('/customer-subscription-deleted')
+  async customerSubscriptionDeleted(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
-      this.webhookService.notifySubscriptionScheduleCreated(evt);
+      this.webhookService.notifyCustomerSubscriptionDeleted(evt);
       return { success: true }
     } catch (error) {
       throw new BadRequestException(error)
     }
   }
-
   @ApiResponse({ type: WebhookResponse })
-  @Post('/subscription-schedule-updated')
-  async subscriptionScheduleUpdated(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
+  @Post('/customer-subscription-trial-will-end')
+  async customerSubscriptionTrialWillEnd(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
-      this.webhookService.notifySubscriptionScheduleUpdated(evt);
+      this.webhookService.notifyCustomerSubscriptionTrialWillEnd(evt);
       return { success: true }
     } catch (error) {
       throw new BadRequestException(error)
     }
   }
-
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/subscription-schedule-released')
-  async subscriptionScheduleReleased(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifySubscriptionScheduleReleased(evt);
-      return { success: true }
-    } catch (error) {
-      throw new BadRequestException(error)
-    }
-  }
-
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/subscription-schedule-expired')
-  async subscriptionScheduleExpired(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifySubscriptionScheduleExpired(evt);
-      return { success: true }
-    } catch (error) {
-      throw new BadRequestException(error)
-    }
-  }
-//#endregion
-
+  //#endregion
+  
   private getEvent(req: RawBodyRequest<Request>): Promise<Stripe.Event> {
     const payload = req.rawBody.toString('utf-8');
       const headerSignature = req.header('stripe-signature');

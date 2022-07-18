@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseResponse } from './base.response';
 
-export class CreatePaymentResponse extends BaseResponse {
+export class CheckoutSessionResponse extends BaseResponse {
   @ApiPropertyOptional()
-  id?: string;
+  sessionId?: string;
 }

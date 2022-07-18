@@ -14,13 +14,13 @@ export class WebhookService {
   private _chargeRefunded$ = new Subject<Stripe.Event>();
   private _chargeFailed$ = new Subject<Stripe.Event>();
 
-  private _subscriptionScheduleAborted$ = new Subject<Stripe.Event>();
-  private _subscriptionScheduleCanceled$ = new Subject<Stripe.Event>();
-  private _subscriptionScheduleCompleted$ = new Subject<Stripe.Event>();
-  private _subscriptionScheduleCreated$ = new Subject<Stripe.Event>();
-  private _subscriptionScheduleUpdated$ = new Subject<Stripe.Event>();
-  private _subscriptionScheduleReleased$ = new Subject<Stripe.Event>();
-  private _subscriptionScheduleExpired$ = new Subject<Stripe.Event>();
+  private _invoicePaymentSucceeded$ = new Subject<Stripe.Event>();
+  private _invoicePaymentFailed$ = new Subject<Stripe.Event>();
+  private _invoicePaymentFinalized$ = new Subject<Stripe.Event>();
+  
+  private _customerSubscriptionDeleted$ = new Subject<Stripe.Event>();
+  private _customerSubscriptionTrialWillEnd$ = new Subject<Stripe.Event>();
+
 
   get paymentIntentCreated$(): Observable<Stripe.Event> {
     return this._paymentIntentCreated$.asObservable();
@@ -43,28 +43,6 @@ export class WebhookService {
   }
   get chargeFailed$(): Observable<Stripe.Event> {
     return this._chargeFailed$.asObservable();
-  }
-
-  get subscriptionScheduleAborted$(): Observable<Stripe.Event> {
-    return this._subscriptionScheduleAborted$.asObservable();
-  }
-  get subscriptionScheduleCanceled$(): Observable<Stripe.Event> {
-    return this._subscriptionScheduleCanceled$.asObservable();
-  }
-  get subscriptionScheduleCompleted$(): Observable<Stripe.Event> {
-    return this._subscriptionScheduleCompleted$.asObservable();
-  }
-  get subscriptionScheduleCreated$(): Observable<Stripe.Event> {
-    return this._subscriptionScheduleCreated$.asObservable();
-  }
-  get subscriptionScheduleUpdated$(): Observable<Stripe.Event> {
-    return this._subscriptionScheduleUpdated$.asObservable();
-  }
-  get subscriptionScheduleReleased$(): Observable<Stripe.Event> {
-    return this._subscriptionScheduleReleased$.asObservable();
-  }
-  get subscriptionScheduleExpired$(): Observable<Stripe.Event> {
-    return this._subscriptionScheduleExpired$.asObservable();
   }
 
   notifyAll(evt: Stripe.Event): void {
@@ -94,26 +72,21 @@ export class WebhookService {
     this._chargeFailed$.next(evt);
   }
 
-  notifySubscriptionScheduleAborted(evt: Stripe.Event): void {
-    this._subscriptionScheduleAborted$.next(evt);
+  notifyInvoicePaymentSucceeded(evt: Stripe.Event): void {
+    this._invoicePaymentSucceeded$.next(evt);
   }
-  notifySubscriptionScheduleCanceled(evt: Stripe.Event): void {
-    this._subscriptionScheduleCanceled$.next(evt);
+  notifyInvoicePaymentFailed(evt: Stripe.Event): void {
+    this._invoicePaymentFailed$.next(evt);
   }
-  notifySubscriptionScheduleCompleted(evt: Stripe.Event): void {
-    this._subscriptionScheduleCompleted$.next(evt);
+  notifyInvoicePaymentFinalized(evt: Stripe.Event): void {
+    this._invoicePaymentFinalized$.next(evt);
   }
-  notifySubscriptionScheduleCreated(evt: Stripe.Event): void {
-    this._subscriptionScheduleCreated$.next(evt);
+
+  notifyCustomerSubscriptionDeleted(evt: Stripe.Event): void {
+    this._customerSubscriptionDeleted$.next(evt);
   }
-  notifySubscriptionScheduleUpdated(evt: Stripe.Event): void {
-    this._subscriptionScheduleUpdated$.next(evt);
-  }
-  notifySubscriptionScheduleReleased(evt: Stripe.Event): void {
-    this._subscriptionScheduleReleased$.next(evt);
-  }
-  notifySubscriptionScheduleExpired(evt: Stripe.Event): void {
-    this._subscriptionScheduleExpired$.next(evt);
+  notifyCustomerSubscriptionTrialWillEnd(evt: Stripe.Event): void {
+    this._customerSubscriptionTrialWillEnd$.next(evt);
   }
 
   subscribeToEvent(type: string): Observable<Stripe.Event> {
