@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   CancelSubscriptionDto,
@@ -19,8 +19,9 @@ import { StripeService } from './stripe.service';
 
 @ApiBearerAuth()
 @ApiTags('stripe')
-@Controller('stripe')
 @UseGuards(StripeAuthGuard)
+@UsePipes(new ValidationPipe())
+@Controller('stripe')
 export class StripeController {
   constructor(private stripeService: StripeService) {}
 
