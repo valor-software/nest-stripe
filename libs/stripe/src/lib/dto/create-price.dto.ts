@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNumber, IsNumberString, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { ProductData } from './product.data.dto';
 
-export class Recurring {
+export class RecurringDto {
   @ApiPropertyOptional({
     description: 'Specifies a usage aggregation strategy for prices of `usage_type=metered`. Allowed values are `sum` for summing up all usage during a period, `last_during_period` for using the last usage record reported within a period, `last_ever` for using the last usage record ever (across period bounds) or `max` which uses the usage record with the maximum reported usage during a period. Defaults to `sum`.',
     enum: ['last_during_period', 'last_ever', 'max', 'sum']
@@ -41,6 +41,32 @@ export class Recurring {
   @IsOptional()
   @IsEnum(['licensed', 'metered'])
   usageType?: 'licensed' | 'metered';
+}
+
+export class TierDto {
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  flatAmount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumberString()
+  flatAmountDecimal?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  unitAmount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumberString()
+  unitAmountDecimal?: string;
+
+  @ApiPropertyOptional()
+  upTo: 'inf' | number;
 }
 
 export class CreatePriceDto {
@@ -91,7 +117,7 @@ export class CreatePriceDto {
   @ApiPropertyOptional({
     description: 'The recurring components of a price such as `interval` and `usage_type`.'
   })
-  recurring?: Recurring;
+  recurring?: RecurringDto;
 
   @ApiPropertyOptional({
     description: 'Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed.',
@@ -100,6 +126,9 @@ export class CreatePriceDto {
   @IsOptional()
   @IsEnum(['exclusive', 'inclusive', 'unspecified'])
   taxBehavior?: 'exclusive' | 'inclusive' | 'unspecified';
+
+  @ApiPropertyOptional({ type: TierDto, isArray: true })
+  tier: TierDto[]
 
   @ApiPropertyOptional({
     description: 'Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the maximum quantity within a period determines the per unit price, in `graduated` tiering pricing can successively change as the quantity grows.',
@@ -118,5 +147,10 @@ export class CreatePriceDto {
   @IsNumber()
   @Min(0)
   amount?: number
+
+  @ApiPropertyOptional({ type: 'string', isArray: true })
+  @IsOptional()
+  @IsArray()
+  expand?: Array<string>;
 
 }
