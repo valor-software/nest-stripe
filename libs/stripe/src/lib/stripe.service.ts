@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import e = require('express');
 import { Stripe } from 'stripe';
 import {
   CreateCheckoutSessionDto,
@@ -15,6 +14,9 @@ import {
   CancelSubscriptionDto,
   BaseResponse,
   SubscriptionsResponse,
+  SubscriptionDto,
+  TaxRate,
+  InvoiceDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -165,7 +167,7 @@ export class StripeService {
       });
       return {
         success: true,
-        subscriptions: subscriptions.data
+        subscriptions: subscriptions.data?.map(s => this.subscriptionToDto(s))
       }
     } catch (exception) {
       return this.handleError(exception, 'Customer Subscription list');
@@ -205,7 +207,7 @@ export class StripeService {
       })
       return {
         success: true,
-        invoice,
+        invoice: this.invoiceToDto(invoice),
       }
     } catch (exception) {
       return this.handleError(exception, 'Invoice Preview');
@@ -222,5 +224,137 @@ export class StripeService {
       success: false,
       errorMessage: `Stripe: ${context} error: ${exception.message}`
     }
+  }
+
+  private subscriptionToDto(subscription: Stripe.Subscription): SubscriptionDto {
+    return {
+      id: subscription.id,
+      created: subscription.created,
+      applicationFeePercent: subscription.application_fee_percent,
+      automaticTaxEnabled: subscription.automatic_tax?.enabled || false,
+      billingThresholds: {
+        amountGte: subscription.billing_thresholds?.amount_gte,
+        resetBillingCycleAnchor: subscription.billing_thresholds?.reset_billing_cycle_anchor
+      },
+      billingCycleAnchor: subscription.billing_cycle_anchor,
+      cancelAt: subscription.cancel_at,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      collectionMethod: subscription.collection_method,
+      currency: subscription.currency,
+      canceledAt: subscription.canceled_at,
+      currentPeriodStart: subscription.current_period_start,
+      currentPeriodEnd: subscription.current_period_end,
+      customer: subscription.customer,
+      daysUntilDue: subscription.days_until_due,
+      defaultPaymentMethod: subscription.default_payment_method,
+      defaultSource: subscription.default_source,
+      defaultTaxRates: subscription.default_tax_rates as unknown as TaxRate[],
+      description: subscription.description,
+      discount: subscription.discount,
+      endedAt: subscription.ended_at,
+      items: subscription.items.data,
+      latestInvoice: subscription.latest_invoice,
+      liveMode: subscription.livemode,
+      metadata: subscription.metadata,
+      nextPendingInvoiceItemInvoice: subscription.next_pending_invoice_item_invoice,
+      object: subscription.object,
+      pauseCollection: subscription.pause_collection,
+      paymentSettings: subscription.payment_settings,
+      pendingInvoiceItemInterval: subscription.pending_invoice_item_interval,
+      pendingSetupIntent: subscription.pending_setup_intent,
+      pendingUpdate: subscription.pending_update,
+      schedule: subscription.schedule,
+      startDate: subscription.start_date,
+      status: subscription.status,
+      testClock: subscription.test_clock,
+      transferData: subscription.transfer_data,
+      trialEnd: subscription.trial_end,
+      trialStart: subscription.trial_start
+    };
+  }
+
+  private invoiceToDto(invoice: Stripe.Invoice): InvoiceDto {
+    let subscription = null;
+    if (typeof invoice.subscription === 'string') {
+      subscription = invoice.subscription
+    } else {
+      subscription = this.subscriptionToDto(invoice.subscription);
+    }
+    return {
+      id: invoice.id,
+      accountCountry: invoice.account_country,
+      accountName: invoice.account_name,
+      accountTaxIds: invoice.account_tax_ids,
+      amountDue: invoice.amount_due,
+      amountPaid: invoice.amount_paid,
+      amountRemaining: invoice.amount_remaining,
+      application: invoice.application,
+      applicationFeeAmount: invoice.application_fee_amount,
+      attemptCount: invoice.attempt_count,
+      attempted: invoice.attempted,
+      autoAdvance: invoice.auto_advance,
+      automaticTax: invoice.automatic_tax,
+      billingReason: invoice.billing_reason,
+      charge: invoice.charge,
+      collectionMethod: invoice.collection_method,
+      created: invoice.created,
+      currency: invoice.currency,
+      customer: invoice.customer,
+      customFields: invoice.custom_fields,
+      customerAddress: invoice.customer_address,
+      customerEmail: invoice.customer_email,
+      customerName: invoice.customer_name,
+      customerPhone: invoice.customer_phone,
+      customerShipping: invoice.customer_shipping,
+      customerTaxExempt: invoice.customer_tax_exempt,
+      customerTaxIds: invoice.customer_tax_ids,
+      defaultPaymentMethod: invoice.default_payment_method,
+      defaultSource: invoice.default_source,
+      defaultTaxRates: invoice.default_tax_rates,
+      description: invoice.description,
+      discount: invoice.discount,
+      discounts: invoice.discounts,
+      dueDate: invoice.due_date,
+      endingBalance: invoice.ending_balance,
+      footer: invoice.footer,
+      hostedInvoiceUrl: invoice.hosted_invoice_url,
+      invoicePdf: invoice.invoice_pdf,
+      lastFinalizationError: invoice.last_finalization_error,
+      lines: invoice.lines?.data,
+      liveMode: invoice.livemode,
+      metadata: invoice.metadata,
+      nextPaymentAttempt: invoice.next_payment_attempt,
+      number: invoice.number,
+      onBehalfOf: invoice.on_behalf_of,
+      object: invoice.object,
+      paid: invoice.paid,
+      paidOutOfBand: invoice.paid_out_of_band,
+      paymentIntent: invoice.payment_intent,
+      paymentSettings: invoice.payment_settings,
+      periodEnd: invoice.period_end,
+      periodStart: invoice.period_start,
+      postPaymentCreditNotesAmount: invoice.post_payment_credit_notes_amount,
+      prePaymentCreditNotesAmount: invoice.pre_payment_credit_notes_amount,
+      quote: invoice.quote,
+      receiptNumber: invoice.receipt_number,
+      renderingOptions: invoice.rendering_options,
+      startingBalance: invoice.starting_balance,
+      statementDescriptor: invoice.statement_descriptor,
+      status: invoice.status,
+      statusTransitions: invoice.status_transitions,
+      subscription,
+      subtotal: invoice.subtotal,
+      subtotalExcludingTax: invoice.subtotal_excluding_tax,
+      subscriptionProrationDate: invoice.subscription_proration_date,
+      tax: invoice.tax,
+      testClock: invoice.test_clock,
+      total: invoice.total,
+      totalDiscountAmounts: invoice.total_discount_amounts,
+      totalExcludingTax: invoice.total_excluding_tax,
+      totalTaxAmounts: invoice.total_tax_amounts,
+      transferData: invoice.transfer_data,
+      thresholdReason: invoice.threshold_reason,
+      webhooksDeliveredAt: invoice.webhooks_delivered_at
+    };
   }
 }

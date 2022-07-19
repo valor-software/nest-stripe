@@ -1,12 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseResponse } from './base.response';
-
-export class Subscription {
-  @ApiPropertyOptional()
-  id?: string;
-}
-
+import { SubscriptionDto } from './subscription.dto';
 export class SubscriptionsResponse extends BaseResponse {
-  @ApiPropertyOptional({isArray: true })
-  subscriptions?: Subscription[];
+  @ApiPropertyOptional({isArray: true, type: SubscriptionDto })
+  subscriptions?: SubscriptionDto[];
 }

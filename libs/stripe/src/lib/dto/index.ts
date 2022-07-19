@@ -7,6 +7,9 @@ export * from './payment-item.dto';
 export * from './create-price.dto'
 export * from './product.data.dto';
 export * from './invoice-preview.dto';
+export * from './base.dto';
+export * from './subscription.dto';
+export * from './invoice.dto';
 
 export * from './customer.response';
 export * from './checkout-session.response';
