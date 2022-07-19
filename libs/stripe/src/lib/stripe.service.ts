@@ -124,9 +124,17 @@ export class StripeService {
           usage_type: dto.recurring.usageType
         } : null,
         tax_behavior: dto.taxBehavior,
+        tiers: dto.tier ? dto.tier.map(t => ({
+          flat_amount: t.flatAmount,
+          flat_amount_decimal: t.flatAmountDecimal,
+          unit_amount: t.unitAmount,
+          unit_amount_decimal: t.unitAmountDecimal,
+          up_to: t.upTo
+        })) : null,
         tiers_mode: dto.tiersMode,
         transfer_lookup_key: dto.transferLookupKey,
-        unit_amount: dto.amount
+        unit_amount: dto.amount,
+        expand: dto.expand
       });
       return {
         success: true,
