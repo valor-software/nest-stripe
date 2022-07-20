@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import Stripe from 'stripe';
-import { BaseDto } from './base.dto';
+import { BaseDto } from '../base.dto';
 import { SubscriptionDto } from './subscription.dto';
 
 export class InvoiceDto extends BaseDto {

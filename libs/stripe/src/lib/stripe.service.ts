@@ -17,6 +17,13 @@ import {
   SubscriptionDto,
   TaxRate,
   InvoiceDto,
+  CreateUsageRecordDto,
+  CreateUsageRecordResponse,
+  UsageRecordDto,
+  PriceDto,
+  PlanDto,
+  ProductDto,
+  SubscriptionItemDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -195,6 +202,22 @@ export class StripeService {
     }
   }
 
+  async createUsageRecord(subscriptionItemId: string, dto: CreateUsageRecordDto): Promise<CreateUsageRecordResponse> {
+    try {
+      const usageRecord = await this.stripe.subscriptionItems.createUsageRecord(subscriptionItemId, {
+        quantity: dto.quantity,
+        action: dto.action,
+        timestamp: dto.timestamp
+      });
+      return {
+        success: true,
+        usageRecord: this.usageRecordToDto(usageRecord)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Usage Record');
+    }
+  }
+
   async updateDefaultSubscriptionPaymentMethodFromPaymentIntent(subscriptionId: string, paymentIntentId: string): Promise<BaseResponse> {
     try {
       const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
@@ -207,7 +230,7 @@ export class StripeService {
     }
   }
 
-  async invoicePreview(dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
+  async upcomingInvoicePreview(dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
     try {
       const invoice = await this.stripe.invoices.retrieveUpcoming({
         customer: dto.customerId,
@@ -235,6 +258,12 @@ export class StripeService {
   }
 
   private subscriptionToDto(subscription: Stripe.Subscription): SubscriptionDto {
+    let latestInvoice = null;
+    if (typeof subscription.latest_invoice === 'string') {
+      latestInvoice = subscription.latest_invoice;
+    } else {
+      latestInvoice = this.invoiceToDto(subscription.latest_invoice as Stripe.Invoice)
+    }
     return {
       id: subscription.id,
       created: subscription.created,
@@ -260,8 +289,8 @@ export class StripeService {
       description: subscription.description,
       discount: subscription.discount,
       endedAt: subscription.ended_at,
-      items: subscription.items.data,
-      latestInvoice: subscription.latest_invoice,
+      items: subscription.items.data.map(i => this.subscriptionItemToDto(i)),
+      latestInvoice,
       liveMode: subscription.livemode,
       metadata: subscription.metadata,
       nextPendingInvoiceItemInvoice: subscription.next_pending_invoice_item_invoice,
@@ -364,5 +393,118 @@ export class StripeService {
       thresholdReason: invoice.threshold_reason,
       webhooksDeliveredAt: invoice.webhooks_delivered_at
     };
+  }
+
+  private usageRecordToDto(usageRecord: Stripe.UsageRecord): UsageRecordDto {
+    return {
+      id: usageRecord.id,
+      liveMode: usageRecord.livemode,
+      object: usageRecord.object,
+      quantity: usageRecord.quantity,
+      subscriptionItem: usageRecord.subscription_item,
+      timestamp: usageRecord.timestamp
+    }
+  }
+
+  private priceToDto(price: Stripe.Price): PriceDto {
+    return {
+      id: price.id,
+      object: price.object,
+      active: price.active,
+      billingScheme: price.billing_scheme,
+      created: price.created,
+      currency: price.currency,
+      liveMode: price.livemode,
+      lookupKey: price.lookup_key,
+      metadata: price.metadata,
+      nickname: price.nickname,
+      product: price.product,
+      recurring: price.recurring,
+      taxBehavior: price.tax_behavior,
+      tiers: price.tiers,
+      tiersMode: price.tiers_mode,
+      transformQuantity: price.transform_quantity,
+      type: price.type,
+      unitAmount: price.unit_amount,
+      unitAmountDecimal: price.unit_amount_decimal
+    }
+  }
+
+  private productToDto(product: Stripe.Product): ProductDto {
+    let defaultPrice = null;
+    if (typeof product.default_price === 'string') {
+      defaultPrice = product.default_price;
+    } else {
+      defaultPrice = this.priceToDto(product.default_price as Stripe.Price);
+    }
+    return {
+      id: product.id,
+      object: product.object,
+      active: product.active,
+      attributes: product.attributes,
+      caption: product.caption,
+      created: product.created,
+      deactivateOn: product.deactivate_on,
+      description: product.description,
+      defaultPrice,
+      images: product.images,
+      liveMode: product.livemode,
+      metadata: product.metadata,
+      name: product.name,
+      packageDimensions: product.package_dimensions,
+      shippable: product.shippable,
+      statementDescriptor: product.statement_descriptor,
+      taxCode: product.tax_code,
+      type: product.type,
+      unitLabel: product.unit_label,
+      updated: product.updated,
+      url: product.url
+    }
+  }
+
+  private planToDto(plan: Stripe.Plan): PlanDto {
+    let product = null;
+    if (typeof plan.product === 'string') {
+      product = plan.product;
+    } else {
+      product = this.productToDto(plan.product as Stripe.Product);
+    }
+    return {
+      id: plan.id,
+      object: plan.object,
+      active: plan.active,
+      aggregateUsage: plan.aggregate_usage,
+      amount: plan.amount,
+      amountDecimal: plan.amount_decimal,
+      billingScheme: plan.billing_scheme,
+      created: plan.created,
+      currency: plan.currency,
+      interval: plan.interval,
+      intervalCount: plan.interval_count,
+      liveMode: plan.livemode,
+      metadata: plan.metadata,
+      nickname: plan.nickname,
+      product,
+      tiers: plan.tiers,
+      tiersMode: plan.tiers_mode,
+      transformUsage: plan.transform_usage,
+      trialPeriodDays: plan.trial_period_days,
+      usageType: plan.usage_type
+    }
+  }
+
+  private subscriptionItemToDto(item: Stripe.SubscriptionItem): SubscriptionItemDto {
+    return {
+      id: item.id,
+      object: item.object,
+      billingThresholds: item.billing_thresholds,
+      created: item.created,
+      metadata: item.metadata,
+      plan: item.plan && this.planToDto(item.plan),
+      price: item.price && this.priceToDto(item.price),
+      quantity: item.quantity,
+      subscription: item.subscription,
+      taxRates: item.tax_rates
+    }
   }
 }

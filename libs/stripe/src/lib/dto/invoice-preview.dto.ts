@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class InvoicePreviewDto {
   @ApiProperty()
@@ -7,7 +7,7 @@ export class InvoicePreviewDto {
   @IsString()
   customerId: string;
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  subscriptionId: string;
+  subscriptionId?: string;
 }

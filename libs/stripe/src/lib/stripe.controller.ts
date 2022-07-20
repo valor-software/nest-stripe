@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   CancelSubscriptionDto,
@@ -7,6 +7,8 @@ import {
   CreateCustomerDto,
   CreatePriceDto,
   CreateSubscriptionDto,
+  CreateUsageRecordDto,
+  CreateUsageRecordResponse,
   CustomerResponse,
   InvoicePreviewDto,
   InvoicePreviewResponse,
@@ -66,8 +68,14 @@ export class StripeController {
   }
 
   @ApiResponse({ type: InvoicePreviewResponse })
-  @Post('/invoice-preview')
-  invoicePreview(@Body() dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
-    return this.stripeService.invoicePreview(dto);
+  @Post('/upcoming-invoice-preview')
+  upcomingInvoicePreview(@Body() dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
+    return this.stripeService.upcomingInvoicePreview(dto);
+  }
+
+  @ApiResponse({ type: CreateUsageRecordResponse })
+  @Post('/create-usage-record/:subscriptionItemId')
+  createUsageRecord(@Param('subscriptionItemId') subscriptionItemId: string, @Body() dto: CreateUsageRecordDto): Promise<CreateUsageRecordResponse> {
+    return this.stripeService.createUsageRecord(subscriptionItemId, dto);
   }
 }

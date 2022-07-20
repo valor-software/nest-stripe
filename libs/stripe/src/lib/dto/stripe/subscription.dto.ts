@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import Stripe from 'stripe';
-import { BaseDto } from './base.dto';
+import { BaseDto } from '../base.dto';
+import { InvoiceDto } from './invoice.dto';
+import { SubscriptionItemDto } from './subscription-item.dto';
 
 export type TaxRate = 'gst' | 'hst' | 'jct' | 'pst' | 'qst' | 'rst' | 'sales_tax' | 'vat';
 
@@ -68,11 +70,11 @@ export class SubscriptionDto extends BaseDto {
   @ApiProperty()
   endedAt: number | null;
 
-  @ApiProperty({ isArray: true })
-  items: Stripe.SubscriptionItem[];
+  @ApiProperty({ type: SubscriptionItemDto, isArray: true })
+  items: SubscriptionItemDto[];
 
   @ApiProperty()
-  latestInvoice: string | Stripe.Invoice | null;
+  latestInvoice: string | InvoiceDto | null;
 
   @ApiProperty()
   nextPendingInvoiceItemInvoice: number | null;

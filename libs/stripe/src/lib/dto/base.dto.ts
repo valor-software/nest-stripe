@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class BaseDto {
   @ApiProperty()
@@ -7,14 +7,20 @@ export class BaseDto {
   @ApiProperty()
   object: string;
 
-  @ApiProperty({
+  @ApiProperty()
+  active?: boolean;
+
+  @ApiPropertyOptional({
     description: 'Time at which the object was created. Measured in seconds since the Unix epoch.'
   })
-  created: number;
+  created?: number;
 
   @ApiProperty()
-  liveMode: boolean;
+  liveMode?: boolean;
 
-  @ApiProperty()
-  metadata: {[name: string]: string | number | null};
+  @ApiPropertyOptional()
+  metadata?: {[name: string]: string | number | null};
+
+  @ApiPropertyOptional()
+  updated?: number;
 }
