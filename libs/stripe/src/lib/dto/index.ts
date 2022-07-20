@@ -8,7 +8,9 @@ export * from './create-price.dto'
 export * from './product.data.dto';
 export * from './invoice-preview.dto';
 export * from './base.dto';
+export * from './shared.dto';
 export * from './create-usage-record.dto';
+export * from './create-payment-method.dto';
 
 export * from './stripe/subscription.dto';
 export * from './stripe/invoice.dto';
@@ -24,4 +26,5 @@ export * from './subscription.response';
 export * from './subscriptions.response';
 export * from './price.response';
 export * from './invoice-preview.response';
-export * from './create-usage-record.response'
+export * from './create-usage-record.response';
+export * from './create-payment-method.response';

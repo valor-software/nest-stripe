@@ -8,3 +8,14 @@ export abstract class BaseResponse {
   @ApiPropertyOptional()
   errorMessage?: string;
 }
+
+export abstract class BaseDataResponse<T> {
+  @ApiProperty()
+  success?: boolean;
+  @ApiProperty()
+  data?: T;
+  @ApiPropertyOptional()
+  errorCode?: string;
+  @ApiPropertyOptional()
+  errorMessage?: string;
+}

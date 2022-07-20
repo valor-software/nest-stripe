@@ -24,6 +24,11 @@ import {
   PlanDto,
   ProductDto,
   SubscriptionItemDto,
+  CreatePaymentMethodDto,
+  CreatePaymentMethodResponse,
+  Card1Dto,
+  Card2Dto,
+  BaseDataResponse,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -78,6 +83,14 @@ export class StripeService {
 
   async createCustomer(dto: CreateCustomerDto): Promise<CustomerResponse> {
     try {
+      let paymentMethod = dto.paymentMethod;
+      if (!dto.paymentMethod && dto.paymentMethodData) {
+        const response = await this.createPaymentMethod(dto.paymentMethodData);
+        if (!response.success) {
+          return response;
+        }
+        paymentMethod = response.paymentMethodId;
+      }
       const customer = await this.stripe.customers.create({
         email: dto.email,
         name: dto.name,
@@ -88,7 +101,7 @@ export class StripeService {
         } : null,
         invoice_prefix: dto.invoicePrefix,
         metadata:dto.metadata,
-        payment_method: dto.paymentMethod,
+        payment_method: paymentMethod,
         preferred_locales: dto.preferredLocales,
         promotion_code: dto.promotionCode,
         source: dto.source,
@@ -98,10 +111,124 @@ export class StripeService {
           phone: dto.shipping.phone
         } : null,
         tax_exempt: dto.taxExempt
-      })
+      });
       return { customerId: customer.id, success: true };
     } catch (exception) {
       return this.handleError(exception, 'Create Customer');
+    }
+  }
+
+  async createPaymentMethod(dto: CreatePaymentMethodDto): Promise<CreatePaymentMethodResponse> {
+    try {
+      let card: Stripe.PaymentMethodCreateParams.Card1 | Stripe.PaymentMethodCreateParams.Card2 = dto.card as Card2Dto;
+      if ((dto.card as Card1Dto)?.number) {
+        const cardDto = (dto.card as Card1Dto)
+        card = {
+          number: cardDto.number,
+          cvc: cardDto.cvc,
+          exp_month: cardDto.expMonth,
+          exp_year: cardDto.expYear
+        } as Stripe.PaymentMethodCreateParams.Card1;
+      }
+      const payload = {
+        acss_debit: dto.acssDebit ? {
+          account_number: dto.acssDebit.accountNumber,
+          institution_number: dto.acssDebit.institutionNumber,
+          transit_number: dto.acssDebit.transitNumber
+        } : undefined,
+        affirm: dto.affirm,
+        afterpay_clearpay: dto.afterPayClearPay,
+        alipay: dto.aliPay,
+        au_becs_debit: dto.auBecsDebit ? {
+          account_number: dto.auBecsDebit.accountNumber,
+          bsb_number: dto.auBecsDebit.bsbNumber
+        } : undefined,
+        bacs_debit: dto.bacsDebit ? {
+          account_number: dto.bacsDebit.accountNumber,
+          sort_code: dto.bacsDebit.sortCode
+        } : undefined,
+        bancontact: dto.banContact,
+        billing_details: dto.billingDetails ? {
+          address: {...dto.billingDetails.address, postal_code: dto.billingDetails.address.postalCode, postalCode: undefined },
+          email: dto.billingDetails.email,
+          name: dto.billingDetails.name,
+          phone: dto.billingDetails.phone,
+        } : undefined,
+        boleto: dto.boleto ? { tax_id: dto.boleto.taxId } : undefined,
+        card,
+        customer: dto.customer,
+        customer_balance: dto.customerBalance,
+        eps: dto.eps ? { bank: dto.eps.bank } : undefined,
+        fpx: dto.fpx ? {
+          account_holder_type: dto.fpx.accountHolderType,
+          bank: dto.fpx.bank
+        } : undefined,
+        giropay: dto.giroPay,
+        grabpay: dto.grabPay,
+        ideal: dto.ideal,
+        interac_present: dto.interacPresent,
+        klarna: dto.klarna ? {
+          dob: {
+            day: dto.klarna.dobDay,
+            month: dto.klarna.dobMonth,
+            year: dto.klarna.dobYear
+          }
+        } : undefined,
+        konbini: dto.konbini,
+        link: dto.link,
+        metadata: dto.metadata,
+        p24: dto.p24,
+        paynow: dto.payNow,
+        promptpay: dto.promptpay,
+        radar_options: dto.radar_session ? { session: dto.radar_session } : undefined,
+        sepa_debit: dto.sepaDebitIban ? { iban: dto.sepaDebitIban } : undefined,
+        sofort: dto.sofortCountry ? { country: dto.sofortCountry } : undefined,
+        type: dto.type,
+        us_bank_account: dto.usBankAccount ? {
+          account_holder_type: dto.usBankAccount.accountHolderType,
+          account_number: dto.usBankAccount.accountNumber,
+          account_type: dto.usBankAccount.accountType,
+          financial_connections_account: dto.usBankAccount.financialConnectionsAccount,
+          routing_number: dto.usBankAccount.routingNumber,
+        } : undefined,
+        wechat_pay: dto.wechatPay
+      } as Stripe.PaymentMethodCreateParams;
+      const paymentMethod = await this.stripe.paymentMethods.create(payload);
+      return { success: true, paymentMethodId: paymentMethod.id };
+    } catch (exception) {
+      return this.handleError(exception, 'Create Payment Method');
+    }
+  }
+
+  async attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<CreatePaymentMethodResponse> {
+    try {
+      const paymentMethod = await this.stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId
+      });
+      return { success: true, paymentMethodId: paymentMethod.id }
+    } catch (exception) {
+      return this.handleError(exception, 'Attach Payment Method');
+    }
+  }
+
+  async detachPaymentMethod(paymentMethodId: string): Promise<CreatePaymentMethodResponse> {
+    try {
+      const paymentMethod = await this.stripe.paymentMethods.detach(paymentMethodId);
+      return { success: true, paymentMethodId: paymentMethod.id }
+    } catch (exception) {
+      return this.handleError(exception, 'Attach Payment Method');
+    }
+  }
+
+  async paymentMethodList(type: Stripe.PaymentMethodListParams.Type, customerId?: string): Promise<BaseDataResponse<Stripe.PaymentMethod[]>> {
+    try {
+      const paymentMethods = await this.stripe.paymentMethods.list({
+        type,
+        customer: customerId
+      });
+      return { success: true, data: paymentMethods.data }
+    } catch (exception) {
+      return this.handleError(exception, 'Attach Payment Method');
     }
   }
 

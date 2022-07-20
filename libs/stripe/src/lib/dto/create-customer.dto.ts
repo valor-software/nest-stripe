@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { CreatePaymentMethodDto } from './create-payment-method.dto';
 
 export class Shipping {
   @ApiProperty()
@@ -68,6 +69,10 @@ export class CreateCustomerDto {
   @IsOptional()
   @IsString()
   paymentMethod?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  paymentMethodData?: CreatePaymentMethodDto;
 
   @ApiPropertyOptional({
     type: 'string',

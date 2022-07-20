@@ -1,10 +1,13 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+  BaseDataResponse,
   CancelSubscriptionDto,
   CheckoutSessionResponse,
   CreateCheckoutSessionDto,
   CreateCustomerDto,
+  CreatePaymentMethodDto,
+  CreatePaymentMethodResponse,
   CreatePriceDto,
   CreateSubscriptionDto,
   CreateUsageRecordDto,
@@ -12,6 +15,7 @@ import {
   CustomerResponse,
   InvoicePreviewDto,
   InvoicePreviewResponse,
+  PaymentMethodTypes,
   PriceResponse,
   SubscriptionResponse,
   SubscriptionsResponse
@@ -39,6 +43,39 @@ export class StripeController {
     return this.stripeService.createCustomer(dto);
   }
 
+  @ApiResponse({ type: CustomerResponse })
+  @Post('/customer/:customerId/attach-payment-method/:paymentMethodId')
+  attachPaymentMethod(@Param('customerId') customerId: string, @Param('paymentMethodId') paymentMethodId: string): Promise<CustomerResponse> {
+    return this.stripeService.attachPaymentMethod(paymentMethodId, customerId);
+  }
+
+  @ApiResponse({ type: CustomerResponse })
+  @Post('/payment-method/:paymentMethodId/detach')
+  detachPaymentMethod(@Param('paymentMethodId') paymentMethodId: string): Promise<CustomerResponse> {
+    return this.stripeService.detachPaymentMethod(paymentMethodId);
+  }
+
+  @ApiResponse({ type: CreatePaymentMethodResponse })
+  @Post('/create-payment-method')
+  createPaymentMethod(@Body() dto: CreatePaymentMethodDto): Promise<CreatePaymentMethodResponse> {
+    return this.stripeService.createPaymentMethod(dto);
+  }
+
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiQuery({
+    name: 'type',
+    enum: PaymentMethodTypes
+  })
+  @ApiQuery({
+    name: 'customerId',
+    type: 'string',
+    required: false
+  })
+  @Post('/paymentMethods')
+  paymentMethodList(@Query('type') type: any, @Query('customerId') customerId: string): Promise<BaseDataResponse<any[]>> {
+    return this.stripeService.paymentMethodList(type, customerId);
+  }
+
   @ApiResponse({ type: PriceResponse })
   @Post('/create-price')
   createPrice(@Body() dto: CreatePriceDto): Promise<PriceResponse> {
@@ -52,12 +89,8 @@ export class StripeController {
   }
 
   @ApiResponse({ type: SubscriptionsResponse })
-  @ApiQuery({
-    name: 'customerId',
-    type: 'string'
-  })
-  @Get('/customer-subscriptions')
-  customerSubscriptions(@Query('customerId') customerId: string): Promise<SubscriptionsResponse> {
+  @Get('/customer/:customerId/subscriptions')
+  customerSubscriptions(@Param('customerId') customerId: string): Promise<SubscriptionsResponse> {
     return this.stripeService.customerSubscriptions(customerId);
   }
 
