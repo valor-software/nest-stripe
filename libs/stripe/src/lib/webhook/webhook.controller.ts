@@ -104,7 +104,7 @@ export class WebhookController {
 
   //#region Invoice
   @ApiResponse({ type: WebhookResponse })
-  @Post('/invoice-payment_succeeded')
+  @Post('/invoice-payment-succeeded')
   async invoicePaymentSucceeded(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
@@ -121,7 +121,7 @@ export class WebhookController {
     }
   }
   @ApiResponse({ type: WebhookResponse })
-  @Post('/invoice-payment_failed')
+  @Post('/invoice-payment-failed')
   async invoicePaymentFailed(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
@@ -132,7 +132,7 @@ export class WebhookController {
     }
   }
   @ApiResponse({ type: WebhookResponse })
-  @Post('/invoice-payment_finalized')
+  @Post('/invoice-payment-finalized')
   async invoicePaymentFinalized(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
