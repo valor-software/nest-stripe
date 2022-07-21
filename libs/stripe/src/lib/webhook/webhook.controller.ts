@@ -6,7 +6,7 @@ import { StripeService } from '../stripe.service';
 import { WebhookResponse } from './webhook.interfaces';
 import { WebhookService } from './webhook.service';
 
-@ApiTags('Stripe Webhooks')
+@ApiTags('Stripe: Webhooks')
 @Controller('stripe/webhooks')
 export class WebhookController {
   constructor(

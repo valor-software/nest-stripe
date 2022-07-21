@@ -29,6 +29,8 @@ import {
   Card1Dto,
   Card2Dto,
   BaseDataResponse,
+  SaveQuoteResponse,
+  SaveQuoteDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -369,6 +371,95 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Invoice Preview');
+    }
+  }
+
+  async createQuote(dto: SaveQuoteDto): Promise<SaveQuoteResponse> {
+    try {
+      let lineItems = undefined;
+      if (dto.lineItems) {
+        lineItems = dto.lineItems.map(i => ({
+          price: i.price,
+          price_data: i.priceData ? {
+            currency: i.priceData.currency,
+            product: i.priceData.product,
+            recurring: i.priceData.recurring ? {
+              interval: i.priceData.recurring.interval,
+              interval_count: i.priceData.recurring.intervalCount
+            } : undefined,
+            tax_behavior: i.priceData.taxBehavior,
+            unit_amount: i.priceData.unitAmount,
+            unit_amount_decimal: i.priceData.unitAmountDecimal
+          } : undefined,
+          quantity: i.quantity,
+          tax_rates: i.taxRates
+        } as Stripe.QuoteCreateParams.LineItem))
+      }
+      const quote = await this.stripe.quotes.create({
+        application_fee_amount: dto.applicationFeeAmount,
+        application_fee_percent: dto.applicationFeePercent,
+        automatic_tax: dto.automaticTaxEnabled != undefined ? { enabled: dto.automaticTaxEnabled } : undefined,
+        collection_method: dto.collectionMethod,
+        customer: dto.customer,
+        default_tax_rates: dto.defaultTaxRates,
+        description: dto.description,
+        discounts: dto.discounts,
+        footer: dto.footer,
+        from_quote: dto.fromQuote,
+        invoice_settings: dto.invoiceSettings ? { days_until_due: dto.invoiceSettings.daysUntilDue } : undefined,
+        line_items: lineItems,
+        metadata: dto.metadata,
+        on_behalf_of: dto.onBehalfOf,
+        subscription_data: dto.subscriptionData ? {
+          effective_date: dto.subscriptionData.effectiveDate,
+          trial_period_days: dto.subscriptionData.trialPeriodDays
+        } : undefined,
+        test_clock: dto.testClock,
+        transfer_data: dto.transferData
+      });
+      return {
+        success: true,
+        quoteId: quote.id,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Quote');
+    }
+  }
+
+  async acceptQuote(quoteId: string): Promise<SaveQuoteResponse> {
+    try {
+      const quote = await this.stripe.quotes.accept(quoteId);
+      return {
+        success: true,
+        quoteId: quote.id,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Accept Quote');
+    }
+  }
+
+  async cancelQuote(quoteId: string): Promise<SaveQuoteResponse> {
+    try {
+      const quote = await this.stripe.quotes.cancel(quoteId);
+      return {
+        success: true,
+        quoteId: quote.id,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Cancel Quote');
+    }
+  }
+
+  async finalizeQuote(quoteId: string, expiresAt?: number): Promise<SaveQuoteResponse> {
+    try {
+      const opts: Stripe.QuoteFinalizeQuoteParams = expiresAt ? { expires_at: expiresAt } : undefined;
+      const quote = await this.stripe.quotes.finalizeQuote(quoteId, opts);
+      return {
+        success: true,
+        quoteId: quote.id,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Finalize Quote');
     }
   }
 

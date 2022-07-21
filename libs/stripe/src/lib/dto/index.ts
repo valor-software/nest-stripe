@@ -19,6 +19,7 @@ export * from './stripe/plan.dto';
 export * from './stripe/price.dto';
 export * from './stripe/product.dto';
 export * from './stripe/subscription-item.dto';
+export * from './save-quote.dto';
 
 export * from './customer.response';
 export * from './checkout-session.response';
@@ -28,3 +29,4 @@ export * from './price.response';
 export * from './invoice-preview.response';
 export * from './create-usage-record.response';
 export * from './create-payment-method.response';
+export * from './save-quote.response';

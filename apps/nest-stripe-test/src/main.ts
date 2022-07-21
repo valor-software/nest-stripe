@@ -20,7 +20,6 @@ async function bootstrap() {
       .setTitle('Nest Stripe')
       .setDescription('Nest Stripe API test')
       .setVersion('1.0')
-      .addTag('nest-stripe')
       .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
