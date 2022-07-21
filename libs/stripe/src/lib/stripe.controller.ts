@@ -55,17 +55,31 @@ export class StripeController {
   }
 
   @ApiResponse({ type: SubscriptionsResponse })
-  @ApiTags('Stripe: Customer', 'Stripe: Subscription')
+  @ApiTags('Stripe: Customer')
   @Get('/customer/:customerId/subscriptions')
   customerSubscriptions(@Param('customerId') customerId: string): Promise<SubscriptionsResponse> {
     return this.stripeService.customerSubscriptions(customerId);
   }
 
-  @ApiResponse({ type: CustomerResponse })
-  @ApiTags('Stripe: Payment Method')
-  @Post('/payment-method/:paymentMethodId/detach')
-  detachPaymentMethod(@Param('paymentMethodId') paymentMethodId: string): Promise<CustomerResponse> {
-    return this.stripeService.detachPaymentMethod(paymentMethodId);
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Customer')
+  @ApiQuery({
+    name: 'type',
+    enum: PaymentMethodTypes
+  })
+  @Get('/customer/:customerId/payment-method-list')
+  customerPaymentMethodList(@Param('customerId') customerId: string, @Query('type') type: any): Promise<BaseDataResponse<any[]>> {
+    return this.stripeService.paymentMethodList(type, customerId);
+  }
+
+  @ApiResponse({ type: InvoicePreviewResponse })
+  @ApiTags('Stripe: Customer')
+  @Get('/customer/:customerId/upcoming-invoice-preview/:subscriptionId')
+  customerUpcomingInvoicePreview(@Param('customerId') customerId: string, @Param('subscriptionId') subscriptionId: string): Promise<InvoicePreviewResponse> {
+    return this.stripeService.upcomingInvoicePreview({
+      customerId,
+      subscriptionId
+    });
   }
 
   @ApiResponse({ type: CreatePaymentMethodResponse })
@@ -75,20 +89,11 @@ export class StripeController {
     return this.stripeService.createPaymentMethod(dto);
   }
 
-  @ApiResponse({ type: BaseDataResponse })
+  @ApiResponse({ type: CustomerResponse })
   @ApiTags('Stripe: Payment Method')
-  @ApiQuery({
-    name: 'type',
-    enum: PaymentMethodTypes
-  })
-  @ApiQuery({
-    name: 'customerId',
-    type: 'string',
-    required: false
-  })
-  @Post('/payment-method-list')
-  paymentMethodList(@Query('type') type: any, @Query('customerId') customerId: string): Promise<BaseDataResponse<any[]>> {
-    return this.stripeService.paymentMethodList(type, customerId);
+  @Post('/payment-method/:paymentMethodId/detach')
+  detachPaymentMethod(@Param('paymentMethodId') paymentMethodId: string): Promise<CustomerResponse> {
+    return this.stripeService.detachPaymentMethod(paymentMethodId);
   }
 
   @ApiResponse({ type: PriceResponse })
@@ -110,13 +115,6 @@ export class StripeController {
   @Post('/subscription/:subscriptionId/cancel')
   cancelSubscription(@Param() subscriptionId: string): Promise<SubscriptionResponse> {
     return this.stripeService.cancelSubscription({ subscriptionId });
-  }
-
-  @ApiResponse({ type: InvoicePreviewResponse })
-  @ApiTags('Stripe: Invoice')
-  @Post('/upcoming-invoice-preview')
-  upcomingInvoicePreview(@Body() dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
-    return this.stripeService.upcomingInvoicePreview(dto);
   }
 
   @ApiResponse({ type: CreateUsageRecordResponse })

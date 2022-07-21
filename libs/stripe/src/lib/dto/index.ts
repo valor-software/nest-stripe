@@ -11,15 +11,17 @@ export * from './base.dto';
 export * from './shared.dto';
 export * from './create-usage-record.dto';
 export * from './create-payment-method.dto';
+export * from './save-quote.dto';
 
+export * from './stripe/subscription-item.dto';
 export * from './stripe/subscription.dto';
+export * from './stripe/invoice-line-item.dto';
 export * from './stripe/invoice.dto';
 export * from './stripe/usage-record.dto';
 export * from './stripe/plan.dto';
 export * from './stripe/price.dto';
 export * from './stripe/product.dto';
-export * from './stripe/subscription-item.dto';
-export * from './save-quote.dto';
+export * from './stripe/quote.dto';
 
 export * from './customer.response';
 export * from './checkout-session.response';

@@ -16,6 +16,7 @@ import {
   SubscriptionsResponse,
   SubscriptionDto,
   TaxRate,
+  InvoiceLineItemDto,
   InvoiceDto,
   CreateUsageRecordDto,
   CreateUsageRecordResponse,
@@ -31,6 +32,8 @@ import {
   BaseDataResponse,
   SaveQuoteResponse,
   SaveQuoteDto,
+  AddressDto,
+  QuoteDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -475,6 +478,20 @@ export class StripeService {
     }
   }
 
+  private addressToDto(address: Stripe.Address | undefined): AddressDto | undefined {
+    if (!address) {
+      return address as undefined;
+    }
+    return {
+      city: address.city,
+      country: address.country,
+      line1: address.line1,
+      line2: address.line2,
+      postalCode: address.postal_code,
+      state: address.state
+    };
+  }
+
   private subscriptionToDto(subscription: Stripe.Subscription): SubscriptionDto {
     let latestInvoice = null;
     if (typeof subscription.latest_invoice === 'string') {
@@ -528,12 +545,104 @@ export class StripeService {
     };
   }
 
+  private invoiceLineItemToDto(item: Stripe.InvoiceLineItem): InvoiceLineItemDto {
+    if (!item) {
+      return item as undefined | null;
+    }
+    return {
+      id: item.id,
+      object: item.object,
+      amount: item.amount,
+      amountExcludingTax: item.amount_excluding_tax,
+      currency: item.currency,
+      description: item.description,
+      discountAmounts: item.discount_amounts,
+      discountable: item.discountable,
+      discounts: item.discounts,
+      invoiceItem: item.invoice_item,
+      liveMode: item.livemode,
+      metadata: item.metadata,
+      period: item.period,
+      plan: item.plan ? this.planToDto(item.plan) : null,
+      price: item.price ? this.priceToDto(item.price) : null,
+      proration: item.proration,
+      prorationDetails: item.proration_details ? {
+        creditedItems: item.proration_details.credited_items ? {
+          invoice: item.proration_details.credited_items.invoice,
+          invoiceLineItems: item.proration_details.credited_items.invoice_line_items
+        } : undefined
+      } : null,
+      quantity: item.quantity,
+      subscription: item.subscription,
+      subscriptionItem: item.subscription_item,
+      taxAmounts: item.tax_amounts?.map(t => ({
+        amount: t.amount,
+        inclusive: t.inclusive,
+        taxRate: t.tax_rate
+      })),
+      taxRates: item.tax_rates,
+      type: item.type,
+      unitAmountExcludingTax: item.unit_amount_excluding_tax
+    }
+  }
+
+  private quoteToDto(quote: Stripe.Quote): QuoteDto {
+    return {
+      id: quote.id,
+      object: quote.object,
+      amountSubtotal: quote.amount_subtotal,
+      amountTotal: quote.amount_total,
+      application: quote.application,
+      applicationFeeAmount: quote.application_fee_amount,
+      applicationFeePercent: quote.application_fee_percent,
+      automaticTax: quote.automatic_tax,
+      collectionMethod: quote.collection_method,
+      computed: quote.computed,
+      created: quote.created,
+      currency: quote.currency,
+      customer: quote.customer,
+      description: quote.description,
+      defaultRaxRates: quote.default_tax_rates,
+      discounts: quote.discounts,
+      expiresAt: quote.expires_at,
+      footer: quote.footer,
+      header: quote.header,
+      invoice: quote.invoice as string,
+      invoiceSettings: quote.invoice_settings ? {
+        daysUntilDue: quote.invoice_settings.days_until_due
+      } : undefined,
+      lineItems: quote.line_items?.data,
+      liveMode: quote.livemode,
+      metadata: quote.metadata,
+      number: quote.number,
+      onBehalfOf: quote.on_behalf_of,
+      status: quote.status,
+      statusTransitions: quote.status_transitions ? {
+        acceptedAt: quote.status_transitions.accepted_at,
+        canceledAt: quote.status_transitions.canceled_at,
+        finalizedAt: quote.status_transitions.finalized_at
+      } : null,
+      subscription: quote.subscription as string,
+      subscriptionData: quote.subscription_data ? {
+        effectiveDate: quote.subscription_data.effective_date,
+        trialPeriodDays: quote.subscription_data.trial_period_days
+      } : null,
+      subscriptionSchedule: quote.subscription_schedule
+    }
+  }
+
   private invoiceToDto(invoice: Stripe.Invoice): InvoiceDto {
     let subscription = null;
     if (typeof invoice.subscription === 'string') {
       subscription = invoice.subscription
-    } else {
+    } else if (invoice.subscription) {
       subscription = this.subscriptionToDto(invoice.subscription);
+    }
+    let quote = null;
+    if (typeof invoice.quote === 'string') {
+      quote = invoice.quote
+    } else if (invoice.quote) {
+      quote = this.quoteToDto(invoice.quote);
     }
     return {
       id: invoice.id,
@@ -556,11 +665,17 @@ export class StripeService {
       currency: invoice.currency,
       customer: invoice.customer,
       customFields: invoice.custom_fields,
-      customerAddress: invoice.customer_address,
+      customerAddress: this.addressToDto(invoice.customer_address),
       customerEmail: invoice.customer_email,
       customerName: invoice.customer_name,
       customerPhone: invoice.customer_phone,
-      customerShipping: invoice.customer_shipping,
+      customerShipping: invoice.customer_shipping ? {
+        address: this.addressToDto(invoice.customer_shipping.address),
+        carrier: invoice.customer_shipping.carrier,
+        name: invoice.customer_shipping.name,
+        phone: invoice.customer_shipping.phone,
+        trackingNumber: invoice.customer_shipping.tracking_number
+      } : undefined,
       customerTaxExempt: invoice.customer_tax_exempt,
       customerTaxIds: invoice.customer_tax_ids,
       defaultPaymentMethod: invoice.default_payment_method,
@@ -575,7 +690,7 @@ export class StripeService {
       hostedInvoiceUrl: invoice.hosted_invoice_url,
       invoicePdf: invoice.invoice_pdf,
       lastFinalizationError: invoice.last_finalization_error,
-      lines: invoice.lines?.data,
+      lines: invoice.lines?.data?.map(i => this.invoiceLineItemToDto(i)),
       liveMode: invoice.livemode,
       metadata: invoice.metadata,
       nextPaymentAttempt: invoice.next_payment_attempt,
@@ -585,30 +700,57 @@ export class StripeService {
       paid: invoice.paid,
       paidOutOfBand: invoice.paid_out_of_band,
       paymentIntent: invoice.payment_intent,
-      paymentSettings: invoice.payment_settings,
+      paymentSettings: invoice.payment_settings ? {
+        paymentMethodOptions: {
+          acssDebit: invoice.payment_settings.payment_method_options?.acss_debit,
+          bancontact: invoice.payment_settings.payment_method_options?.bancontact,
+          card: invoice.payment_settings.payment_method_options?.card,
+          customerBalance: invoice.payment_settings.payment_method_options?.customer_balance,
+          konbini: invoice.payment_settings.payment_method_options?.konbini,
+          usBankAccount: invoice.payment_settings.payment_method_options?.us_bank_account
+        },
+        paymentMethodTypes: invoice.payment_settings.payment_method_types
+      } : undefined,
       periodEnd: invoice.period_end,
       periodStart: invoice.period_start,
       postPaymentCreditNotesAmount: invoice.post_payment_credit_notes_amount,
       prePaymentCreditNotesAmount: invoice.pre_payment_credit_notes_amount,
-      quote: invoice.quote,
+      quote,
       receiptNumber: invoice.receipt_number,
-      renderingOptions: invoice.rendering_options,
+      renderingOptions: invoice.rendering_options ? {
+        amountTaxDisplay: invoice.rendering_options.amount_tax_display
+      } : null,
       startingBalance: invoice.starting_balance,
       statementDescriptor: invoice.statement_descriptor,
       status: invoice.status,
-      statusTransitions: invoice.status_transitions,
+      statusTransitions: invoice.status_transitions ? {
+        finalizedAt: invoice.status_transitions.finalized_at,
+        markedUncollectibleAt: invoice.status_transitions.marked_uncollectible_at,
+        paidAt: invoice.status_transitions.paid_at,
+        voidedAt: invoice.status_transitions.voided_at
+      } : null,
       subscription,
       subtotal: invoice.subtotal,
       subtotalExcludingTax: invoice.subtotal_excluding_tax,
       subscriptionProrationDate: invoice.subscription_proration_date,
       tax: invoice.tax,
       testClock: invoice.test_clock,
+      thresholdReason: invoice.threshold_reason ? {
+        amountGte: invoice.threshold_reason.amount_gte,
+        itemReasons: invoice.threshold_reason.item_reasons?.map(i => ({
+          lineItemIds: i.line_item_ids,
+          usageGte: i.usage_gte
+        }))
+      } : null,
       total: invoice.total,
       totalDiscountAmounts: invoice.total_discount_amounts,
       totalExcludingTax: invoice.total_excluding_tax,
-      totalTaxAmounts: invoice.total_tax_amounts,
+      totalTaxAmounts: invoice.total_tax_amounts?.map(i => ({
+        amount: i.amount,
+        inclusive: i.inclusive,
+        taxRate: i.tax_rate
+      })),
       transferData: invoice.transfer_data,
-      thresholdReason: invoice.threshold_reason,
       webhooksDeliveredAt: invoice.webhooks_delivered_at
     };
   }

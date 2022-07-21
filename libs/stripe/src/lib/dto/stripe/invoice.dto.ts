@@ -1,7 +1,236 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { BaseDto } from '../base.dto';
+import { AddressDto, AutomaticTaxDto, CustomFieldDto, TaxAmountDto, TaxRates } from '../shared.dto';
+import { InvoiceLineItemDto } from './invoice-line-item.dto';
+import { QuoteDto } from './quote.dto';
 import { SubscriptionDto } from './subscription.dto';
+
+const BillingReasons = [
+  'automatic_pending_invoice_item_invoice'
+  , 'manual'
+  , 'quote_accept'
+  , 'subscription'
+  , 'subscription_create'
+  , 'subscription_cycle'
+  , 'subscription_threshold'
+  , 'subscription_update'
+  , 'upcoming'
+];
+
+const CustomerTaxIdTypes = [
+  'ae_trn'
+  , 'au_abn'
+  , 'au_arn'
+  , 'bg_uic'
+  , 'br_cnpj'
+  , 'br_cpf'
+  , 'ca_bn'
+  , 'ca_gst_hst'
+  , 'ca_pst_bc'
+  , 'ca_pst_mb'
+  , 'ca_pst_sk'
+  , 'ca_qst'
+  , 'ch_vat'
+  , 'cl_tin'
+  , 'es_cif'
+  , 'eu_oss_vat'
+  , 'eu_vat'
+  , 'gb_vat'
+  , 'ge_vat'
+  , 'hk_br'
+  , 'hu_tin'
+  , 'id_npwp'
+  , 'il_vat'
+  , 'in_gst'
+  , 'is_vat'
+  , 'jp_cn'
+  , 'jp_rn'
+  , 'kr_brn'
+  , 'li_uid'
+  , 'mx_rfc'
+  , 'my_frp'
+  , 'my_itn'
+  , 'my_sst'
+  , 'no_vat'
+  , 'nz_gst'
+  , 'ru_inn'
+  , 'ru_kpp'
+  , 'sa_vat'
+  , 'sg_gst'
+  , 'sg_uen'
+  , 'si_tin'
+  , 'th_vat'
+  , 'tw_vat'
+  , 'ua_vat'
+  , 'unknown'
+  , 'us_ein'
+  , 'za_vat'
+];
+
+const PaymentMethodTypes = [
+  'ach_credit_transfer'
+  , 'ach_debit'
+  , 'acss_debit'
+  , 'au_becs_debit'
+  , 'bacs_debit'
+  , 'bancontact'
+  , 'boleto'
+  , 'card'
+  , 'customer_balance'
+  , 'fpx'
+  , 'giropay'
+  , 'grabpay'
+  , 'ideal'
+  , 'konbini'
+  , 'link'
+  , 'paynow'
+  , 'promptpay'
+  , 'sepa_credit_transfer'
+  , 'sepa_debit'
+  , 'sofort'
+  , 'us_bank_account'
+  , 'wechat_pay'
+]
+export class InvoiceCustomerShippingDto {
+  @ApiPropertyOptional()
+  address?: AddressDto;
+
+  @ApiPropertyOptional({
+    description: 'The delivery service that shipped a physical product, such as Fedex, UPS, USPS, etc.'
+  })
+  carrier?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Recipient name.'
+  })
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Recipient phone (including extension).'
+  })
+  phone?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'The tracking number for a physical product, obtained from the delivery service. If multiple tracking numbers were generated for this purchase, please separate them with commas.'
+  })
+  trackingNumber?: string | null;
+}
+
+export class CustomerTaxIdDto {
+  @ApiProperty({ enum: CustomerTaxIdTypes })
+  type: Stripe.Invoice.CustomerTaxId.Type;
+
+  @ApiProperty({ description: 'The value of the tax ID.' })
+  value: string | null;
+}
+
+export class InvoicePaymentMethodOptionsDto {
+  @ApiProperty({
+    description: 'If paying by `acss_debit`, this sub-hash contains details about the Canadian pre-authorized debit payment method options to pass to the invoice\'s PaymentIntent.'
+  })
+  acssDebit: Stripe.Invoice.PaymentSettings.PaymentMethodOptions.AcssDebit | null;
+
+  @ApiProperty({
+    description: 'If paying by `bancontact`, this sub-hash contains details about the Bancontact payment method options to pass to the invoice\'s PaymentIntent.'
+  })
+  bancontact: Stripe.Invoice.PaymentSettings.PaymentMethodOptions.Bancontact | null;
+
+  @ApiProperty({
+    description: 'If paying by `card`, this sub-hash contains details about the Card payment method options to pass to the invoice\'s PaymentIntent.'
+  })
+  card: Stripe.Invoice.PaymentSettings.PaymentMethodOptions.Card | null;
+
+  @ApiProperty({
+    description: 'If paying by `customer_balance`, this sub-hash contains details about the Bank transfer payment method options to pass to the invoice\'s PaymentIntent.'
+  })
+  customerBalance: Stripe.Invoice.PaymentSettings.PaymentMethodOptions.CustomerBalance | null;
+
+  @ApiProperty({
+    description: 'If paying by `konbini`, this sub-hash contains details about the Konbini payment method options to pass to the invoice\'s PaymentIntent.'
+  })
+  konbini: Stripe.Invoice.PaymentSettings.PaymentMethodOptions.Konbini | null;
+
+  @ApiProperty({
+    description: 'If paying by `us_bank_account`, this sub-hash contains details about the ACH direct debit payment method options to pass to the invoice\'s PaymentIntent.'
+  })
+  usBankAccount: Stripe.Invoice.PaymentSettings.PaymentMethodOptions.UsBankAccount | null;
+}
+
+export class InvoicePaymentSettingsDto {
+  @ApiProperty({
+    description: 'Payment-method-specific configuration to provide to the invoice\'s PaymentIntent.'
+  })
+  paymentMethodOptions: InvoicePaymentMethodOptionsDto | null;
+
+  @ApiProperty({
+    description: 'The list of payment method types (e.g. card) to provide to the invoice\'s PaymentIntent. If not set, Stripe attempts to automatically determine the types to use by looking at the invoice\'s default payment method, the subscription\'s default payment method, the customer\'s default payment method, and your [invoice template settings](https://dashboard.stripe.com/settings/billing/invoice).',
+    enum: PaymentMethodTypes
+  })
+  paymentMethodTypes: Array<Stripe.Invoice.PaymentSettings.PaymentMethodType> | null;
+}
+
+export class InvoiceRenderingOptionsDto {
+  @ApiProperty({
+    description: 'How line-item prices and amounts will be displayed with respect to tax on invoice PDFs.'
+  })
+  amountTaxDisplay: string | null;
+}
+
+export class InvoiceStatusTransitionsDto {
+  @ApiProperty()
+  finalizedAt: number | null;
+  
+  @ApiProperty()
+  markedUncollectibleAt: number | null;
+  
+  @ApiProperty()
+  paidAt: number | null;
+  
+  @ApiProperty()
+  voidedAt: number | null;
+}
+
+export class InvoiceThresholdItemReasonDto {
+  @ApiProperty({ isArray: true, type: String })
+  lineItemIds: Array<string>;
+
+  @ApiProperty()
+  usageGte: number;
+}
+export class InvoiceThresholdReasonDto {
+  @ApiProperty({
+    description: 'The total invoice amount threshold boundary if it triggered the threshold invoice.'
+  })
+  amountGte: number | null;
+
+  @ApiProperty({
+    description: 'Indicates which line items triggered a threshold invoice.',
+    isArray: true,
+    type: InvoiceThresholdItemReasonDto
+  })
+  itemReasons: Array<InvoiceThresholdItemReasonDto>;
+}
+
+export class InvoiceTotalDiscountAmountDto {
+  @ApiProperty()
+  amount: number;
+
+  @ApiProperty()
+  discount: string | Stripe.Discount | Stripe.DeletedDiscount;
+}
+
+export class InvoiceTransferDataDto {
+  @ApiProperty({
+    description: 'The amount in %s that will be transferred to the destination account when the invoice is paid. By default, the entire amount is transferred to the destination.'
+  })
+  amount: number | null;
+
+  @ApiProperty({
+    description: 'The account where funds from the payment will be transferred to upon payment success.'
+  })
+  destination: string | Stripe.Account;
+}
 
 export class InvoiceDto extends BaseDto {
   @ApiProperty()
@@ -42,28 +271,32 @@ export class InvoiceDto extends BaseDto {
   autoAdvance: boolean;
 
   @ApiProperty()
-  automaticTax: Stripe.Invoice.AutomaticTax;
+  automaticTax: AutomaticTaxDto;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: [BillingReasons]
+  })
   billingReason: Stripe.Invoice.BillingReason | null;
 
   @ApiProperty()
   charge: string | Stripe.Charge | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: ['charge_automatically', 'send_invoice']
+  })
   collectionMethod: Stripe.Invoice.CollectionMethod;
 
   @ApiProperty()
   currency: string;
 
-  @ApiProperty({ isArray: true })
-  customFields: Array<Stripe.Invoice.CustomField> | null;
+  @ApiProperty({ isArray: true, type: CustomFieldDto })
+  customFields: Array<CustomFieldDto> | null;
 
   @ApiProperty()
   customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
 
   @ApiProperty()
-  customerAddress: Stripe.Address | null;
+  customerAddress: AddressDto | null;
 
   @ApiProperty()
   customerEmail: string | null;
@@ -75,13 +308,15 @@ export class InvoiceDto extends BaseDto {
   customerPhone: string | null;
 
   @ApiProperty()
-  customerShipping: Stripe.Invoice.CustomerShipping | null;
+  customerShipping: InvoiceCustomerShippingDto | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: ['exempt', 'none', 'reverse']
+  })
   customerTaxExempt: Stripe.Invoice.CustomerTaxExempt | null;
 
-  @ApiProperty()
-  customerTaxIds: Array<Stripe.Invoice.CustomerTaxId> | null;
+  @ApiProperty({ isArray: true, type: CustomerTaxIdDto })
+  customerTaxIds: Array<CustomerTaxIdDto> | null;
 
   @ApiProperty()
   defaultPaymentMethod: string | Stripe.PaymentMethod | null;
@@ -119,8 +354,8 @@ export class InvoiceDto extends BaseDto {
   @ApiProperty()
   lastFinalizationError: Stripe.Invoice.LastFinalizationError | null;
 
-  @ApiProperty()
-  lines: Array<Stripe.InvoiceLineItem>;
+  @ApiProperty({ isArray: true, type: InvoiceLineItemDto })
+  lines: Array<InvoiceLineItemDto>;
 
   @ApiProperty()
   nextPaymentAttempt: number | null;
@@ -141,7 +376,7 @@ export class InvoiceDto extends BaseDto {
   paymentIntent: string | Stripe.PaymentIntent | null;
 
   @ApiProperty()
-  paymentSettings: Stripe.Invoice.PaymentSettings;
+  paymentSettings: InvoicePaymentSettingsDto;
 
   @ApiProperty()
   periodEnd: number;
@@ -156,13 +391,13 @@ export class InvoiceDto extends BaseDto {
   prePaymentCreditNotesAmount: number;
 
   @ApiProperty()
-  quote: string | Stripe.Quote | null;
+  quote: string | QuoteDto| null;
 
   @ApiProperty()
   receiptNumber: string | null;
 
   @ApiProperty()
-  renderingOptions: Stripe.Invoice.RenderingOptions | null;
+  renderingOptions: InvoiceRenderingOptionsDto | null;
 
   @ApiProperty()
   startingBalance: number;
@@ -174,7 +409,7 @@ export class InvoiceDto extends BaseDto {
   status: 'deleted' | 'draft' | 'open' | 'paid' | 'uncollectible' | 'void' | null;
 
   @ApiProperty()
-  statusTransitions: Stripe.Invoice.StatusTransitions;
+  statusTransitions: InvoiceStatusTransitionsDto;
 
   @ApiProperty()
   subscription: string | SubscriptionDto | null;
@@ -191,26 +426,26 @@ export class InvoiceDto extends BaseDto {
   @ApiProperty()
   tax: number | null;
 
-  @ApiProperty()
+  @ApiProperty({ enum: ['advancing', 'internal_failure', 'ready']})
   testClock: string | Stripe.TestHelpers.TestClock | null;
 
   @ApiProperty()
-  thresholdReason?: Stripe.Invoice.ThresholdReason;
+  thresholdReason?: InvoiceThresholdReasonDto;
 
   @ApiProperty()
   total: number;
 
-  @ApiProperty()
-  totalDiscountAmounts: Array<Stripe.Invoice.TotalDiscountAmount> | null;
+  @ApiProperty({ isArray: true, type: InvoiceTotalDiscountAmountDto })
+  totalDiscountAmounts: Array<InvoiceTotalDiscountAmountDto> | null;
 
   @ApiProperty()
   totalExcludingTax: number | null;
 
-  @ApiProperty()
-  totalTaxAmounts: Array<Stripe.Invoice.TotalTaxAmount>;
+  @ApiProperty({ isArray: true, type: TaxAmountDto })
+  totalTaxAmounts: Array<TaxAmountDto>;
 
   @ApiProperty()
-  transferData: Stripe.Invoice.TransferData | null;
+  transferData: InvoiceTransferDataDto | null;
 
   @ApiProperty()
   webhooksDeliveredAt: number | null;
