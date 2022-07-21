@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import Stripe from 'stripe';
 import {
   BaseDataResponse,
   CancelSubscriptionDto,
@@ -40,6 +41,7 @@ export class StripeController {
     return this.stripeService.createCheckoutSession(dto);
   }
 
+  //#region Customer
   @ApiResponse({ type: CustomerResponse })
   @ApiTags('Stripe: Customer')
   @Post('/customer/create')
@@ -52,6 +54,13 @@ export class StripeController {
   @Post('/customer/:customerId/attach-payment-method/:paymentMethodId')
   attachPaymentMethod(@Param('customerId') customerId: string, @Param('paymentMethodId') paymentMethodId: string): Promise<CustomerResponse> {
     return this.stripeService.attachPaymentMethod(paymentMethodId, customerId);
+  }
+
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Customer')
+  @Get('/customer/:customerId')
+  getCustomer(@Param('customerId') customerId: string): Promise<BaseDataResponse<any>> {
+    return this.stripeService.getCustomer(customerId);
   }
 
   @ApiResponse({ type: SubscriptionsResponse })
@@ -69,7 +78,7 @@ export class StripeController {
   })
   @Get('/customer/:customerId/payment-method-list')
   customerPaymentMethodList(@Param('customerId') customerId: string, @Query('type') type: any): Promise<BaseDataResponse<any[]>> {
-    return this.stripeService.paymentMethodList(type, customerId);
+    return this.stripeService.customerPaymentMethodList(customerId, type);
   }
 
   @ApiResponse({ type: InvoicePreviewResponse })
@@ -81,6 +90,19 @@ export class StripeController {
       subscriptionId
     });
   }
+
+  @ApiResponse({ type: SubscriptionsResponse })
+  @ApiTags('Stripe: Customer')
+  @ApiQuery({
+    name: 'status',
+    enum: ['accepted', 'canceled', 'draft', 'open'],
+    required: false
+  })
+  @Get('/customer/:customerId/quotes')
+  customerQuotes(@Param('customerId') customerId: string, @Query('status') status?: Stripe.Quote.Status): Promise<SubscriptionsResponse> {
+    return this.stripeService.customerQuoteList(customerId, status);
+  }
+  //#endregion
 
   @ApiResponse({ type: CreatePaymentMethodResponse })
   @ApiTags('Stripe: Payment Method')
@@ -103,6 +125,7 @@ export class StripeController {
     return this.stripeService.createPrice(dto);
   }
 
+  //#region Subscription
   @ApiResponse({ type: SubscriptionResponse })
   @ApiTags('Stripe: Subscription')
   @Post('/subscription/create')
@@ -117,6 +140,14 @@ export class StripeController {
     return this.stripeService.cancelSubscription({ subscriptionId });
   }
 
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Subscription')
+  @Get('/subscription/:subscriptionId/subscription-items')
+  listSubscriptionItems(@Param('subscriptionId') subscriptionId: string): Promise<BaseDataResponse<any>> {
+    return this.stripeService.listSubscriptionItems(subscriptionId);
+  }
+  //#endregion
+
   @ApiResponse({ type: CreateUsageRecordResponse })
   @ApiTags('Stripe: Usage Record')
   @Post('/usage-record/create/:subscriptionItemId')
@@ -124,6 +155,14 @@ export class StripeController {
     return this.stripeService.createUsageRecord(subscriptionItemId, dto);
   }
 
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Usage Record')
+  @Get('/usage-record/:subscriptionItemId/usage-record-summaries')
+  listUsageRecordSummaries(@Param('subscriptionItemId') subscriptionItemId: string): Promise<BaseDataResponse<any>> {
+    return this.stripeService.listUsageRecordSummaries(subscriptionItemId);
+  }
+
+  //#region Quote
   @ApiResponse({ type: SaveQuoteResponse })
   @ApiTags('Stripe: Quote')
   @Post('/quote/create')
@@ -156,4 +195,5 @@ export class StripeController {
   finalizeQuote(@Param() quoteId: string, @Query() expiredAt?: number): Promise<SaveQuoteResponse> {
     return this.stripeService.finalizeQuote(quoteId, expiredAt);
   }
+  //#endregion
 }

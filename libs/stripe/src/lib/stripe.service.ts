@@ -123,6 +123,18 @@ export class StripeService {
     }
   }
 
+  async getCustomer(customerId: string): Promise<BaseDataResponse<Stripe.Customer>> {
+    try {
+      const customer = await this.stripe.customers.retrieve(customerId);
+      return {
+        success: true,
+        data: customer as Stripe.Customer
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Customer');
+    }
+  }
+
   async createPaymentMethod(dto: CreatePaymentMethodDto): Promise<CreatePaymentMethodResponse> {
     try {
       let card: Stripe.PaymentMethodCreateParams.Card1 | Stripe.PaymentMethodCreateParams.Card2 = dto.card as Card2Dto;
@@ -225,11 +237,10 @@ export class StripeService {
     }
   }
 
-  async paymentMethodList(type: Stripe.PaymentMethodListParams.Type, customerId?: string): Promise<BaseDataResponse<Stripe.PaymentMethod[]>> {
+  async customerPaymentMethodList(customerId: string, type: Stripe.PaymentMethodListParams.Type): Promise<BaseDataResponse<Stripe.PaymentMethod[]>> {
     try {
-      const paymentMethods = await this.stripe.paymentMethods.list({
-        type,
-        customer: customerId
+      const paymentMethods = await this.stripe.customers.listPaymentMethods(customerId, {
+        type
       });
       return { success: true, data: paymentMethods.data }
     } catch (exception) {
@@ -350,6 +361,32 @@ export class StripeService {
     }
   }
 
+  async listSubscriptionItems(subscriptionId: string): Promise<BaseDataResponse<Stripe.SubscriptionItem[]>> {
+    try {
+      const subscriptionItems = await this.stripe.subscriptionItems.list({
+        subscription: subscriptionId
+      })
+      return {
+        success: true,
+        data: subscriptionItems.data
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'List Usage Record Summaries');
+    }
+  }
+
+  async listUsageRecordSummaries(subscriptionItemId: string): Promise<BaseDataResponse<Stripe.UsageRecordSummary[]>> {
+    try {
+      const usageRecordSummaries = await this.stripe.subscriptionItems.listUsageRecordSummaries(subscriptionItemId)
+      return {
+        success: true,
+        data: usageRecordSummaries.data
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'List Usage Record Summaries');
+    }
+  }
+
   async updateDefaultSubscriptionPaymentMethodFromPaymentIntent(subscriptionId: string, paymentIntentId: string): Promise<BaseResponse> {
     try {
       const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
@@ -463,6 +500,21 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Finalize Quote');
+    }
+  }
+
+  async customerQuoteList(customerId: string, status?: Stripe.Quote.Status): Promise<BaseDataResponse<QuoteDto[]>> {
+    try {
+      const quotes = await this.stripe.quotes.list({
+        customer: customerId,
+        status
+      });
+      return {
+        success: true,
+        data: quotes.data.map(q => this.quoteToDto(q))
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Customer Quotes');
     }
   }
 
