@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import Stripe from 'stripe';
 
 export const TaxRates = [
@@ -71,6 +71,18 @@ export class PeriodDto {
     description: 'The start of the period.'
   })
   start: number;
+}
+
+export class CreateAutomaticTaxDto {
+  @ApiProperty()
+  @IsBoolean()
+  enabled: boolean;
+
+  @ApiProperty({
+    enum: ['complete', 'failed', 'requires_location_inputs']
+  })
+  @IsEnum(['complete', 'failed', 'requires_location_inputs'])
+  status: 'complete' | 'failed' | 'requires_location_inputs' | null;
 }
 
 export class AutomaticTaxDto {

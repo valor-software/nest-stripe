@@ -21,7 +21,8 @@ import {
   PaymentMethodTypes,
   PriceResponse,
   SubscriptionResponse,
-  SubscriptionsResponse
+  SubscriptionsResponse,
+  CreateSubscriptionItemDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -140,6 +141,13 @@ export class StripeController {
     return this.stripeService.cancelSubscription({ subscriptionId });
   }
 
+  @ApiResponse({ type: SubscriptionResponse })
+  @ApiTags('Stripe: Subscription')
+  @Post('/subscription/:subscriptionId/create-subscription-item')
+  createSubscriptionItem(@Param('subscriptionId') subscriptionId: string, @Body() dto: CreateSubscriptionItemDto): Promise<SubscriptionResponse> {
+    return this.stripeService.createSubscriptionItem(subscriptionId, dto);
+  }
+
   @ApiResponse({ type: BaseDataResponse })
   @ApiTags('Stripe: Subscription')
   @Get('/subscription/:subscriptionId/subscription-items')
@@ -148,6 +156,7 @@ export class StripeController {
   }
   //#endregion
 
+  //#region Usage Record
   @ApiResponse({ type: CreateUsageRecordResponse })
   @ApiTags('Stripe: Usage Record')
   @Post('/usage-record/create/:subscriptionItemId')
@@ -161,6 +170,7 @@ export class StripeController {
   listUsageRecordSummaries(@Param('subscriptionItemId') subscriptionItemId: string): Promise<BaseDataResponse<any>> {
     return this.stripeService.listUsageRecordSummaries(subscriptionItemId);
   }
+  //#endregion
 
   //#region Quote
   @ApiResponse({ type: SaveQuoteResponse })

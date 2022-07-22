@@ -12,6 +12,7 @@ export * from './shared.dto';
 export * from './create-usage-record.dto';
 export * from './create-payment-method.dto';
 export * from './save-quote.dto';
+export * from './create-subscription-item.dto';
 
 export * from './stripe/subscription-item.dto';
 export * from './stripe/subscription.dto';

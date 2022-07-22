@@ -34,6 +34,7 @@ import {
   SaveQuoteDto,
   AddressDto,
   QuoteDto,
+  CreateSubscriptionItemDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -302,9 +303,86 @@ export class StripeService {
         items: [{
           price: dto.priceId
         }],
-        payment_behavior: 'default_incomplete',
+        add_invoice_items: dto.addInvoiceItems?.map(i => ({
+          price: i.priceId,
+          quantity:i.quantity,
+          tax_rates: i.taxRates
+        })),
+        application_fee_percent: dto.applicationFeePercent,
+        automatic_tax: dto.automaticTax,
+        backdate_start_date: dto.backdateStartDate,
+        billing_cycle_anchor: dto.billingCycleAnchor,
+        billing_thresholds: dto.billingThresholds ? {
+          amount_gte: dto.billingThresholds.amountGte,
+          reset_billing_cycle_anchor: dto.billingThresholds.resetBillingCycleAnchor
+        } : undefined,
+        cancel_at: dto.cancelAt,
+        cancel_at_period_end: dto.cancelAtPeriodEnd,
+        collection_method: dto.collectionMethod,
+        coupon: dto.couponId,
+        default_payment_method: dto.defaultPaymentMethod,
+        description: dto.description,
+        metadata: dto.metadata,
+        payment_behavior: dto.paymentBehavior || 'default_incomplete',
+        days_until_due: dto.daysUntilDue,
+        default_source: dto.defaultSource,
+        default_tax_rates: dto.defaultTaxRates,
+        off_session: dto.offSession,
+        payment_settings: dto.paymentSettings ? {
+          payment_method_options: dto.paymentSettings.paymentMethodOptions ? {
+            card: dto.paymentSettings.paymentMethodOptions.card ? {
+              mandate_options: {
+                amount: dto.paymentSettings.paymentMethodOptions.card.mandateOptions.amount,
+                amount_type: dto.paymentSettings.paymentMethodOptions.card.mandateOptions.amountType,
+                description: dto.paymentSettings.paymentMethodOptions.card.mandateOptions.description
+              },
+              request_three_d_secure: dto.paymentSettings.paymentMethodOptions.card.requestThreeDSecure
+            } : undefined,
+            us_bank_account: {
+              financial_connections: {
+                permissions: dto.paymentSettings.paymentMethodOptions.usBankAccount?.financialConnections
+              },
+              verification_method: dto.paymentSettings.paymentMethodOptions.usBankAccount?.verificationMethod
+            }
+          } : undefined,
+          payment_method_types: dto.paymentSettings.paymentMethodTypes,
+          save_default_payment_method: dto.paymentSettings.saveDefaultPaymentMethod
+        } : undefined,
+        promotion_code: dto.promotionCode,
+        trial_end: dto.trialEnd,
+        trial_from_plan: dto.trialFromPlan,
+        trial_period_days: dto.trialPeriodDays,
         expand: ['latest_invoice.payment_intent']
       });
+      const invoice = subscription.latest_invoice as Stripe.Invoice;
+      const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
+      return {
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent?.client_secret
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Subscription');
+    }
+  }
+
+  async createSubscriptionItem(subscriptionId: string, dto: CreateSubscriptionItemDto): Promise<SubscriptionResponse> {
+    try {
+      const subscriptionItem = await this.stripe.subscriptionItems.create({
+        subscription: subscriptionId,
+        price: dto.priceId,
+        plan: dto.planId,
+        billing_thresholds: dto.billingThresholds ? {
+          usage_gte: dto.billingThresholds.usageGte
+        } : undefined,
+        metadata: dto.metadata,
+        payment_behavior: dto.paymentBehavior,
+        proration_behavior: dto.prorationBehavior,
+        proration_date: dto.proration_date,
+        quantity: dto.quantity,
+        tax_rates: dto.taxRates,
+        expand: ['subscription.latest_invoice.payment_intent']
+      });
+      const subscription = await this.stripe.subscriptions.retrieve(subscriptionItem.subscription);
       const invoice = subscription.latest_invoice as Stripe.Invoice;
       const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
       return {
