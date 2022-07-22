@@ -173,14 +173,14 @@ export class StripeController {
   @ApiResponse({ type: SaveQuoteResponse })
   @ApiTags('Stripe: Quote')
   @Post('/quote/:quoteId/accept')
-  acceptQuote(@Param() quoteId: string): Promise<SaveQuoteResponse> {
+  acceptQuote(@Param('quoteId') quoteId: string): Promise<SaveQuoteResponse> {
     return this.stripeService.acceptQuote(quoteId);
   }
 
   @ApiResponse({ type: SaveQuoteResponse })
   @ApiTags('Stripe: Quote')
   @Post('/quote/:quoteId/cancel')
-  cancelQuote(@Param() quoteId: string): Promise<SaveQuoteResponse> {
+  cancelQuote(@Param('quoteId') quoteId: string): Promise<SaveQuoteResponse> {
     return this.stripeService.cancelQuote(quoteId);
   }
 
@@ -192,7 +192,7 @@ export class StripeController {
     required: false
   })
   @Post('/quote/:quoteId/finalize')
-  finalizeQuote(@Param() quoteId: string, @Query() expiredAt?: number): Promise<SaveQuoteResponse> {
+  finalizeQuote(@Param('quoteId') quoteId: string, @Query('expiredAt') expiredAt?: number): Promise<SaveQuoteResponse> {
     return this.stripeService.finalizeQuote(quoteId, expiredAt);
   }
   //#endregion
