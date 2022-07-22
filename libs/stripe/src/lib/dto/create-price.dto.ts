@@ -1,47 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsEnum, IsNumber, IsNumberString, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { ProductData } from './product.data.dto';
-
-export class RecurringDto {
-  @ApiPropertyOptional({
-    description: 'Specifies a usage aggregation strategy for prices of `usage_type=metered`. Allowed values are `sum` for summing up all usage during a period, `last_during_period` for using the last usage record reported within a period, `last_ever` for using the last usage record ever (across period bounds) or `max` which uses the usage record with the maximum reported usage during a period. Defaults to `sum`.',
-    enum: ['last_during_period', 'last_ever', 'max', 'sum']
-  })
-  @IsOptional()
-  @IsEnum(['last_during_period', 'last_ever', 'max', 'sum'])
-  aggregateUsage?: 'last_during_period' | 'last_ever' | 'max' | 'sum';
-
-  @ApiPropertyOptional({
-    description: 'Specifies billing frequency. Either `day`, `week`, `month` or `year`.',
-    enum: ['day', 'month', 'week', 'year']
-  })
-  @IsOptional()
-  @IsEnum(['day', 'month', 'week', 'year'])
-  interval: 'day' | 'month' | 'week' | 'year';
-
-  @ApiPropertyOptional({
-    description: 'The number of intervals between subscription billings. For example, `interval=month` and `interval_count=3` bills every 3 months. Maximum of one year interval allowed (1 year, 12 months, or 52 weeks).'
-  })
-  @IsOptional()
-  @IsNumber()
-  intervalCount?: number;
-
-  @ApiPropertyOptional({
-    description: 'Default number of trial days when subscribing a customer to this price using [`trial_from_plan=true`](https://stripe.com/docs/api#create_subscription-trial_from_plan).'
-  })
-  @IsOptional()
-  @IsNumber()
-  trialPeriod_Days?: number;
-
-  @ApiPropertyOptional({
-    description: 'Configures how the quantity per period should be determined. Can be either `metered` or `licensed`. `licensed` automatically bills the `quantity` set when adding it to a subscription. `metered` aggregates the total usage based on usage records. Defaults to `licensed`.',
-    enum: ['licensed', 'metered'],
-    default: 'metered'
-  })
-  @IsOptional()
-  @IsEnum(['licensed', 'metered'])
-  usageType?: 'licensed' | 'metered';
-}
+import { CreateRecurringDto } from './shared.dto';
 
 export class TierDto {
 
@@ -117,7 +77,7 @@ export class CreatePriceDto {
   @ApiPropertyOptional({
     description: 'The recurring components of a price such as `interval` and `usage_type`.'
   })
-  recurring?: RecurringDto;
+  recurring?: CreateRecurringDto;
 
   @ApiPropertyOptional({
     description: 'Specifies whether the price is considered inclusive of taxes or exclusive of taxes. One of `inclusive`, `exclusive`, or `unspecified`. Once specified as either `inclusive` or `exclusive`, it cannot be changed.',

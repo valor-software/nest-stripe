@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { BaseDto } from '../base.dto';
+import { RecurringDto } from '../shared.dto';
 
 export class PriceDto extends BaseDto {
 
@@ -20,7 +21,7 @@ export class PriceDto extends BaseDto {
   product: string | Stripe.Product | Stripe.DeletedProduct;
 
   @ApiProperty()
-  recurring: Stripe.Price.Recurring | null;
+  recurring: RecurringDto | null;
 
   @ApiProperty({ enum: ['exclusive', 'inclusive', 'unspecified']})
   taxBehavior: 'exclusive' | 'inclusive' | 'unspecified' | null;

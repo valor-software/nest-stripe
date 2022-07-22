@@ -270,7 +270,7 @@ export class StripeService {
           aggregate_usage: dto.recurring.aggregateUsage,
           interval: dto.recurring.interval,
           interval_count: dto.recurring.intervalCount,
-          trial_period_days: dto.recurring.trialPeriod_Days,
+          trial_period_days: dto.recurring.trialPeriodDays,
           usage_type: dto.recurring.usageType
         } : null,
         tax_behavior: dto.taxBehavior,
@@ -831,7 +831,13 @@ export class StripeService {
       metadata: price.metadata,
       nickname: price.nickname,
       product: price.product,
-      recurring: price.recurring,
+      recurring: price.recurring ? {
+        aggregateUsage: price.recurring.aggregate_usage,
+        interval: price.recurring.interval,
+        intervalCount: price.recurring.interval_count,
+        trialPeriodDays: price.recurring.trial_period_days,
+        usageType: price.recurring.usage_type
+      } : null,
       taxBehavior: price.tax_behavior,
       tiers: price.tiers,
       tiersMode: price.tiers_mode,
