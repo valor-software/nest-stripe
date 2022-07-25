@@ -1,0 +1,1 @@
+npm run build:app && npm run run:app

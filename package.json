@@ -5,7 +5,9 @@
   "scripts": {
     "start": "nx serve",
     "build": "nx run stripe:build",
-    "test": "nx test"
+    "test": "nx test",
+    "build:app": "nx run nest-stripe-test:build",
+    "run:app": "node dist/apps/nest-stripe-test/main.js"
   },
   "private": true,
   "dependencies": {
