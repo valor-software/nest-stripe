@@ -70,7 +70,7 @@ export class StripeService {
       const session = await this.stripe.checkout.sessions.create({
         payment_method_types: this.config.paymentMethods || ['card'],
         line_items: lineItems,
-        mode: 'payment',
+        mode: dto.mode || 'payment',
         metadata,
         payment_intent_data: {
           metadata,
