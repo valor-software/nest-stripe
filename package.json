@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "nx serve",
+    "start": "npm run build:app && npm run run:app",
     "build": "nx run stripe:build",
     "test": "nx test",
     "build:app": "nx run nest-stripe-test:build",
