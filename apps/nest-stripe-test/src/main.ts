@@ -5,16 +5,21 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
+import { join } from 'path';
 import { AppModule } from './app/app.module';
 
 dotenv.config();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
+  app.useStaticAssets(join(__dirname, 'assets', 'public'));
+  app.setBaseViewsDir(join(__dirname, 'assets', 'views'));
+  app.setViewEngine('hbs');
 
   const swaggerConfig = new DocumentBuilder()
       .setTitle('Nest Stripe')
