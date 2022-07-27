@@ -70,7 +70,7 @@ export class StripeService {
       const session = await this.stripe.checkout.sessions.create({
         payment_method_types: this.config.paymentMethods || ['card'],
         line_items: lineItems,
-        mode: 'payment',
+        mode: dto.mode || 'payment',
         metadata,
         payment_intent_data: {
           metadata,
@@ -290,6 +290,18 @@ export class StripeService {
       return {
         success: true,
         priceId: price.id
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Create Price');
+    }
+  }
+
+  async getPriceList(): Promise<BaseDataResponse<PriceDto[]>> {
+    try {
+      const prices = await this.stripe.prices.list();
+      return {
+        success: true,
+        data: prices.data.map((p) => this.priceToDto(p))
       };
     } catch (exception) {
       return this.handleError(exception, 'Create Price');

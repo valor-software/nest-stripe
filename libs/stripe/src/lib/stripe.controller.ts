@@ -22,7 +22,8 @@ import {
   PriceResponse,
   SubscriptionResponse,
   SubscriptionsResponse,
-  CreateSubscriptionItemDto
+  CreateSubscriptionItemDto,
+  PriceDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -124,6 +125,13 @@ export class StripeController {
   @Post('/price/create')
   createPrice(@Body() dto: CreatePriceDto): Promise<PriceResponse> {
     return this.stripeService.createPrice(dto);
+  }
+
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Price')
+  @Get('/price')
+  priceList(): Promise<BaseDataResponse<PriceDto[]>> {
+    return this.stripeService.getPriceList();
   }
 
   //#region Subscription
