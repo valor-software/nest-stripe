@@ -50,6 +50,23 @@ export class StripeService {
     private readonly logger: StripeLogger
   ) {}
 
+  async createPaymentIntent(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
+    try {
+      const amount = dto.items.reduce((a,b) => a += b.quantity * b.price, 0);
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount,
+        currency: this.config.currency,
+        //automatic_payment_methods: { enabled: true }
+      })
+      return {
+        success: true,
+        clientSecret: paymentIntent.client_secret
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Payment Intent');
+    }
+  }
+
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
     try {
       const metadata = dto.metadata;
@@ -63,7 +80,7 @@ export class StripeService {
               ...item,
             },
           },
-          unit_amount: item.price * 100,
+          unit_amount: item.price,
         },
         quantity: item.quantity,
       } as unknown as Stripe.Checkout.SessionCreateParams.LineItem));
@@ -77,10 +94,13 @@ export class StripeService {
         },
         success_url: this.config.successUrl,
         cancel_url: this.config.cancelUrl,
+        expand: ['payment_intent']
       });
+      const pi = session.payment_intent as Stripe.PaymentIntent;
       return {
         success: true,
-        sessionId: session.id
+        sessionId: session.id,
+        clientSecret: pi.client_secret
       };
     } catch (exception) {
       return this.handleError(exception, 'Create Checkout Session');

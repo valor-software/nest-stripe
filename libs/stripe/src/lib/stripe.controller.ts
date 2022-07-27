@@ -37,6 +37,13 @@ export class StripeController {
   constructor(private stripeService: StripeService) {}
 
   @ApiResponse({ type: CheckoutSessionResponse })
+  @ApiTags('Stripe: Payment Intent')
+  @Post('/payment-intent/create')
+  createPaymentIntent(@Body() dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
+    return this.stripeService.createPaymentIntent(dto);
+  }
+
+  @ApiResponse({ type: CheckoutSessionResponse })
   @ApiTags('Stripe: Checkout Session')
   @Post('/checkout-session/create')
   createCheckoutSession(@Body() dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
