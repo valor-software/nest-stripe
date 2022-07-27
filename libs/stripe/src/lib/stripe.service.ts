@@ -296,6 +296,18 @@ export class StripeService {
     }
   }
 
+  async getPriceList(): Promise<BaseDataResponse<PriceDto[]>> {
+    try {
+      const prices = await this.stripe.prices.list();
+      return {
+        success: true,
+        data: prices.data.map((p) => this.priceToDto(p))
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Create Price');
+    }
+  }
+
   async createSubscription(dto: CreateSubscriptionDto): Promise<SubscriptionResponse> {
     try {
       const subscription = await this.stripe.subscriptions.create({
