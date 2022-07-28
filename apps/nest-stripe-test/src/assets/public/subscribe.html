@@ -1,0 +1,17 @@
+<head>
+  <title>Subscription prices</title>
+  <link rel="stylesheet" href="subscribe.css" />
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="subscribe.js" defer></script>
+</head>
+<body>
+  <form id="payment-form">
+    <div id="card-element">
+      <!-- Elements will create input elements here -->
+    </div>
+
+    <!-- We'll put the error messages in this element -->
+    <div id="card-element-errors" role="alert"></div>
+    <button type="submit">Subscribe</button>
+  </form>
+</body>

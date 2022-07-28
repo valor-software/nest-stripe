@@ -3,7 +3,9 @@
 const stripe = Stripe("pk_test_51LLQ2WDqFfDeJ7rty32Q8eJPoihnDZx1ynRxwtlfF3ch0gIHNdned4XIN7xzlrv0oWHYLAEgZvc7MsIEV2dHx9gc00Yd1FygN9");
 
 // The items the customer wants to buy
-const items = [{ id: "xl-tshirt", price: 700, displayName: 'XL T-Shirt', quantity: 1 }];
+//const items = [{ id: "xl-tshirt", price: 700, displayName: 'XL T-Shirt', quantity: 1 }];
+//const items = [{ productId: "prod_M82Fj866VdTuJy", quantity: 1, price: 85 }];
+const items = [{ priceId: "price_1LPmBKDqFfDeJ7rtNWuUVbC6", quantity: 1, price: 85 }];
 
 let elements;
 
@@ -16,12 +18,12 @@ document
 
 // Fetches a payment intent and captures the client secret
 async function initialize() {
-  const response = await fetch("/api/stripe/payment-intent/create", {
+  const response = await fetch("/api/stripe/checkout-session/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({ items, mode: 'subscription' }),
   });
-  const { clientSecret, success, errorMessage } = await response.json();
+  const { sessionId, clientSecret, success, errorMessage } = await response.json();
   if (!success) {
     console.error(errorMessage);
     return;
@@ -74,6 +76,7 @@ async function initialize() {
       },
     },
   };
+  stripe.redirectToCheckout({sessionId});
   elements = stripe.elements({ appearance, clientSecret });
 
   const paymentElement = elements.create("payment");

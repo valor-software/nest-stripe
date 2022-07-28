@@ -62,7 +62,6 @@ export class StripeService {
         customer: dto.customer,
         description: dto.description,
         payment_method_types: this.config.paymentMethods,
-        //automatic_payment_methods: { enabled: true }
       })
       return {
         success: true,
@@ -82,16 +81,22 @@ export class StripeService {
     try {
       const metadata = dto.metadata;
       const lineItems = dto.items.map(item => ({
-        price_data: {
+        price: item.priceId,
+        price_data: item.priceId ? undefined : {
           currency: dto.currency || this.config.currency || 'usd',
-          product_data: {
+          product: item.productId,
+          product_data: item.productId ? undefined : {
             name: item.displayName,
             images: item.images,
           },
-          unit_amount: item.price,
+          unit_amount: item.price * item.quantity,
+          recurring: dto.recurringInterval ? {
+            interval: dto.recurringInterval,
+            interval_count: dto.recurringIntervalCount
+          } : undefined,
         },
         quantity: item.quantity,
-      } as unknown as Stripe.Checkout.SessionCreateParams.LineItem));
+      } as Stripe.Checkout.SessionCreateParams.LineItem));
       const session = await this.stripe.checkout.sessions.create({
         payment_method_types: this.config.paymentMethods || ['card'],
         line_items: lineItems,
@@ -103,13 +108,14 @@ export class StripeService {
         success_url: this.config.successUrl,
         cancel_url: this.config.cancelUrl,
         customer: dto.customer,
-        currency: dto.currency || this.config.currency || 'usd'
+        currency: dto.currency || this.config.currency || 'usd',
+        expand: ['payment_intent']
       });
       const pi = session.payment_intent as Stripe.PaymentIntent;
       return {
         success: true,
         sessionId: session.id,
-        clientSecret: pi.client_secret
+        clientSecret: pi?.client_secret
       };
     } catch (exception) {
       return this.handleError(exception, 'Create Checkout Session');
@@ -251,6 +257,11 @@ export class StripeService {
     try {
       const paymentMethod = await this.stripe.paymentMethods.attach(paymentMethodId, {
         customer: customerId
+      });
+      await this.stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
       });
       return { success: true, paymentMethodId: paymentMethod.id }
     } catch (exception) {
@@ -403,8 +414,12 @@ export class StripeService {
       const invoice = subscription.latest_invoice as Stripe.Invoice;
       const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
       return {
+        success: true,
         subscriptionId: subscription.id,
-        clientSecret: paymentIntent?.client_secret
+        status: subscription.status,
+        clientSecret: paymentIntent?.client_secret,
+        paymentIntentStatus: paymentIntent?.status,
+        latestInvoiceId: paymentIntent?.id
       }
     } catch (exception) {
       return this.handleError(exception, 'Create Subscription');
