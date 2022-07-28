@@ -37,6 +37,7 @@ import {
   CreateSubscriptionItemDto,
   CreatePaymentIntentDto,
   PaymentIntentResponse,
+  PaymentIntentDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -61,7 +62,6 @@ export class StripeService {
         customer: dto.customer,
         description: dto.description,
         payment_method_types: this.config.paymentMethods,
-        //automatic_payment_methods: { enabled: true }
       })
       return {
         success: true,
@@ -72,20 +72,31 @@ export class StripeService {
     }
   }
 
+  async getPaymentIntentById(id: string): Promise<PaymentIntentDto> {
+    const pi = await this.stripe.paymentIntents.retrieve(id);
+    return this.paymentIntentToDto(pi);
+  }
+
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
     try {
       const metadata = dto.metadata;
       const lineItems = dto.items.map(item => ({
-        price_data: {
+        price: item.priceId,
+        price_data: item.priceId ? undefined : {
           currency: dto.currency || this.config.currency || 'usd',
-          product_data: {
+          product: item.productId,
+          product_data: item.productId ? undefined : {
             name: item.displayName,
             images: item.images,
           },
-          unit_amount: item.price,
+          unit_amount: item.price * item.quantity,
+          recurring: dto.recurringInterval ? {
+            interval: dto.recurringInterval,
+            interval_count: dto.recurringIntervalCount
+          } : undefined,
         },
         quantity: item.quantity,
-      } as unknown as Stripe.Checkout.SessionCreateParams.LineItem));
+      } as Stripe.Checkout.SessionCreateParams.LineItem));
       const session = await this.stripe.checkout.sessions.create({
         payment_method_types: this.config.paymentMethods || ['card'],
         line_items: lineItems,
@@ -97,13 +108,14 @@ export class StripeService {
         success_url: this.config.successUrl,
         cancel_url: this.config.cancelUrl,
         customer: dto.customer,
-        currency: dto.currency || this.config.currency || 'usd'
+        currency: dto.currency || this.config.currency || 'usd',
+        expand: ['payment_intent']
       });
       const pi = session.payment_intent as Stripe.PaymentIntent;
       return {
         success: true,
         sessionId: session.id,
-        clientSecret: pi.client_secret
+        clientSecret: pi?.client_secret
       };
     } catch (exception) {
       return this.handleError(exception, 'Create Checkout Session');
@@ -246,6 +258,11 @@ export class StripeService {
       const paymentMethod = await this.stripe.paymentMethods.attach(paymentMethodId, {
         customer: customerId
       });
+      await this.stripe.customers.update(customerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
       return { success: true, paymentMethodId: paymentMethod.id }
     } catch (exception) {
       return this.handleError(exception, 'Attach Payment Method');
@@ -317,6 +334,11 @@ export class StripeService {
     } catch (exception) {
       return this.handleError(exception, 'Create Price');
     }
+  }
+
+  async getPriceById(id: string): Promise<PriceDto> {
+    const price = await this.stripe.prices.retrieve(id);
+    return this.priceToDto(price);
   }
 
   async getPriceList(): Promise<BaseDataResponse<PriceDto[]>> {
@@ -392,8 +414,12 @@ export class StripeService {
       const invoice = subscription.latest_invoice as Stripe.Invoice;
       const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
       return {
+        success: true,
         subscriptionId: subscription.id,
-        clientSecret: paymentIntent?.client_secret
+        status: subscription.status,
+        clientSecret: paymentIntent?.client_secret,
+        paymentIntentStatus: paymentIntent?.status,
+        latestInvoiceId: paymentIntent?.id
       }
     } catch (exception) {
       return this.handleError(exception, 'Create Subscription');
@@ -525,6 +551,11 @@ export class StripeService {
     } catch (exception) {
       return this.handleError(exception, 'Invoice Preview');
     }
+  }
+
+  async getInvoiceById(id: string): Promise<InvoiceDto> {
+    const invoice = await this.stripe.invoices.retrieve(id);
+    return this.invoiceToDto(invoice);
   }
 
   async createQuote(dto: SaveQuoteDto): Promise<SaveQuoteResponse> {
@@ -1037,5 +1068,51 @@ export class StripeService {
       subscription: item.subscription,
       taxRates: item.tax_rates
     }
+  }
+
+  private paymentIntentToDto(pi: Stripe.PaymentIntent): PaymentIntentDto {
+    return {
+      id: pi.id,
+      object: pi.object,
+      amount: pi.amount,
+      amountCapturable: pi.amount_capturable,
+      amountTip: pi.amount_details?.tip?.amount,
+      amountReceived: pi.amount_received,
+      application: pi.application as string,
+      applicationFeeAmount: pi.application_fee_amount,
+      automaticPaymentMethodsEnabled: pi.automatic_payment_methods?.enabled,
+      canceledAt: pi.canceled_at,
+      cancellationReason: pi.cancellation_reason,
+      captureMethod: pi.capture_method,
+      clientSecret: pi.client_secret,
+      confirmationMethod: pi.confirmation_method,
+      currency: pi.currency,
+      customer: pi.customer as string | null,
+      created: pi.created,
+      description: pi.description,
+      invoice: pi.invoice as string | null,
+      lastPaymentError: pi.last_payment_error,
+      liveMode: pi.livemode,
+      metadata: pi.metadata,
+      nextAction: pi.next_action,
+      onBehalfOf: pi.on_behalf_of,
+      paymentMethod: pi.payment_method as string | null,
+      paymentMethodOptions: pi.payment_method_options,
+      paymentMethodTypes: pi.payment_method_types,
+      processing: pi.processing,
+      receiptEmail: pi.receipt_email,
+      review: pi.review as string | null,
+      setupFutureUsage: pi.setup_future_usage,
+      shipping: pi.shipping ? {
+        address: pi.shipping.address ? this.addressToDto(pi.shipping.address) : null,
+        carrier: pi.shipping.carrier,
+        name: pi.shipping.name,
+        phone: pi.shipping.phone,
+        trackingNumber: pi.shipping.tracking_number
+      } : null,
+      statementDescriptor: pi.statement_descriptor,
+      statementDescriptorSuffix: pi.statement_descriptor_suffix,
+      status: pi.status,
+    };
   }
 }

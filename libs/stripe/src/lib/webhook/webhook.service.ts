@@ -21,6 +21,9 @@ export class WebhookService {
   private _customerSubscriptionDeleted$ = new Subject<Stripe.Event>();
   private _customerSubscriptionTrialWillEnd$ = new Subject<Stripe.Event>();
 
+  get all$(): Observable<Stripe.Event> {
+    return this._all$.asObservable();
+  }
 
   get paymentIntentCreated$(): Observable<Stripe.Event> {
     return this._paymentIntentCreated$.asObservable();

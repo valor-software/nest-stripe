@@ -24,6 +24,7 @@ export * from './stripe/plan.dto';
 export * from './stripe/price.dto';
 export * from './stripe/product.dto';
 export * from './stripe/quote.dto';
+export * from './stripe/payment-intent.dto';
 
 export * from './customer.response';
 export * from './checkout-session.response';
