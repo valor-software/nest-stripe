@@ -16,14 +16,15 @@ import {
   CreateUsageRecordDto,
   CreateUsageRecordResponse,
   CustomerResponse,
-  InvoicePreviewDto,
   InvoicePreviewResponse,
   PaymentMethodTypes,
   PriceResponse,
   SubscriptionResponse,
   SubscriptionsResponse,
   CreateSubscriptionItemDto,
-  PriceDto
+  PriceDto,
+  CreatePaymentIntentDto,
+  PaymentIntentResponse
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -35,6 +36,13 @@ import { StripeService } from './stripe.service';
 @Controller('stripe')
 export class StripeController {
   constructor(private stripeService: StripeService) {}
+
+  @ApiResponse({ type: PaymentIntentResponse })
+  @ApiTags('Stripe: Payment Intent')
+  @Post('/payment-intent/create')
+  createPaymentIntent(@Body() dto: CreatePaymentIntentDto): Promise<PaymentIntentResponse> {
+    return this.stripeService.createPaymentIntent(dto);
+  }
 
   @ApiResponse({ type: CheckoutSessionResponse })
   @ApiTags('Stripe: Payment Intent')
