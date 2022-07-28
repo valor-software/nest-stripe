@@ -4,4 +4,6 @@ import { BaseResponse } from './base.response';
 export class CheckoutSessionResponse extends BaseResponse {
   @ApiPropertyOptional()
   sessionId?: string;
+  @ApiPropertyOptional()
+  clientSecret?: string;
 }

@@ -99,9 +99,11 @@ export class StripeService {
         customer: dto.customer,
         currency: dto.currency || this.config.currency || 'usd'
       });
+      const pi = session.payment_intent as Stripe.PaymentIntent;
       return {
         success: true,
-        sessionId: session.id
+        sessionId: session.id,
+        clientSecret: pi.client_secret
       };
     } catch (exception) {
       return this.handleError(exception, 'Create Checkout Session');
