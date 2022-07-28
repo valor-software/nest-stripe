@@ -35,6 +35,8 @@ import {
   AddressDto,
   QuoteDto,
   CreateSubscriptionItemDto,
+  CreatePaymentIntentDto,
+  PaymentIntentResponse,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -50,20 +52,37 @@ export class StripeService {
     private readonly logger: StripeLogger
   ) {}
 
+  async createPaymentIntent(dto: CreatePaymentIntentDto): Promise<PaymentIntentResponse> {
+    try {
+      const amount = dto.items.reduce((a,b) => a += b.quantity * b.price, 0);
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount,
+        currency: dto.currency || this.config.currency || 'usd',
+        customer: dto.customer,
+        description: dto.description,
+        payment_method_types: this.config.paymentMethods,
+        //automatic_payment_methods: { enabled: true }
+      })
+      return {
+        success: true,
+        clientSecret: paymentIntent.client_secret
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Payment Intent');
+    }
+  }
+
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
     try {
       const metadata = dto.metadata;
       const lineItems = dto.items.map(item => ({
         price_data: {
-          currency: this.config.currency || 'USD',
+          currency: dto.currency || this.config.currency || 'usd',
           product_data: {
             name: item.displayName,
             images: item.images,
-            metadata: {
-              ...item,
-            },
           },
-          unit_amount: item.price * 100,
+          unit_amount: item.price,
         },
         quantity: item.quantity,
       } as unknown as Stripe.Checkout.SessionCreateParams.LineItem));
@@ -77,6 +96,8 @@ export class StripeService {
         },
         success_url: this.config.successUrl,
         cancel_url: this.config.cancelUrl,
+        customer: dto.customer,
+        currency: dto.currency || this.config.currency || 'usd'
       });
       return {
         success: true,
@@ -252,7 +273,7 @@ export class StripeService {
   async createPrice(dto: CreatePriceDto): Promise<PriceResponse> {
     try {
       const price = await this.stripe.prices.create({
-        currency: dto.currency || this.config.currency || 'USD',
+        currency: dto.currency || this.config.currency || 'usd',
         active: dto.active != undefined ? dto.active : true,
         billing_scheme: dto.billingScheme,
         lookup_key: dto.lookupKey,
