@@ -3,9 +3,12 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "nx serve",
-    "build": "nx run stripe:build",
-    "test": "nx test"
+    "nx": "nx",
+    "start": "npm run build:app && npm run run:app",
+    "build": "npm run nx run stripe:build",
+    "test": "nx test",
+    "build:app": "npm run nx run nest-stripe-test:build",
+    "run:app": "node dist/apps/nest-stripe-test/main.js"
   },
   "private": true,
   "dependencies": {
