@@ -3,7 +3,6 @@ import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import {
   BaseDataResponse,
-  CancelSubscriptionDto,
   CheckoutSessionResponse,
   CreateCheckoutSessionDto,
   CreateCustomerDto,
