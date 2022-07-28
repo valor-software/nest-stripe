@@ -35,6 +35,8 @@ import {
   AddressDto,
   QuoteDto,
   CreateSubscriptionItemDto,
+  CreatePaymentIntentDto,
+  PaymentIntentResponse,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -50,12 +52,15 @@ export class StripeService {
     private readonly logger: StripeLogger
   ) {}
 
-  async createPaymentIntent(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
+  async createPaymentIntent(dto: CreatePaymentIntentDto): Promise<PaymentIntentResponse> {
     try {
       const amount = dto.items.reduce((a,b) => a += b.quantity * b.price, 0);
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount,
-        currency: this.config.currency,
+        currency: dto.currency || this.config.currency || 'usd',
+        customer: dto.customer,
+        description: dto.description,
+        payment_method_types: this.config.paymentMethods,
         //automatic_payment_methods: { enabled: true }
       })
       return {
@@ -72,13 +77,10 @@ export class StripeService {
       const metadata = dto.metadata;
       const lineItems = dto.items.map(item => ({
         price_data: {
-          currency: this.config.currency || 'USD',
+          currency: dto.currency || this.config.currency || 'usd',
           product_data: {
             name: item.displayName,
             images: item.images,
-            metadata: {
-              ...item,
-            },
           },
           unit_amount: item.price,
         },
@@ -94,13 +96,12 @@ export class StripeService {
         },
         success_url: this.config.successUrl,
         cancel_url: this.config.cancelUrl,
-        expand: ['payment_intent']
+        customer: dto.customer,
+        currency: dto.currency || this.config.currency || 'usd'
       });
-      const pi = session.payment_intent as Stripe.PaymentIntent;
       return {
         success: true,
-        sessionId: session.id,
-        clientSecret: pi.client_secret
+        sessionId: session.id
       };
     } catch (exception) {
       return this.handleError(exception, 'Create Checkout Session');
@@ -272,7 +273,7 @@ export class StripeService {
   async createPrice(dto: CreatePriceDto): Promise<PriceResponse> {
     try {
       const price = await this.stripe.prices.create({
-        currency: dto.currency || this.config.currency || 'USD',
+        currency: dto.currency || this.config.currency || 'usd',
         active: dto.active != undefined ? dto.active : true,
         billing_scheme: dto.billingScheme,
         lookup_key: dto.lookupKey,

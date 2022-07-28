@@ -13,6 +13,7 @@ export * from './create-usage-record.dto';
 export * from './create-payment-method.dto';
 export * from './save-quote.dto';
 export * from './create-subscription-item.dto';
+export * from './create-payment-intent.dto';
 
 export * from './stripe/subscription-item.dto';
 export * from './stripe/subscription.dto';
@@ -33,3 +34,4 @@ export * from './invoice-preview.response';
 export * from './create-usage-record.response';
 export * from './create-payment-method.response';
 export * from './save-quote.response';
+export * from './payment-intent.response';
