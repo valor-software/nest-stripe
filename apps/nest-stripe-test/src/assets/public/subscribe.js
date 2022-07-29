@@ -166,7 +166,7 @@ function createSubscription({ customerId, paymentMethodId, priceId }) {
         },
         body: JSON.stringify({
           customerId: customerId,
-          priceId: priceId,
+          items: [{priceId}],
         })
       })
     })

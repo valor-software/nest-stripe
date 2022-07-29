@@ -14,7 +14,9 @@ export * from './create-payment-method.dto';
 export * from './save-quote.dto';
 export * from './create-subscription-item.dto';
 export * from './create-payment-intent.dto';
+export * from './update-subscription.dto';
 
+export * from './stripe/customer.dto';
 export * from './stripe/subscription-item.dto';
 export * from './stripe/subscription.dto';
 export * from './stripe/invoice-line-item.dto';

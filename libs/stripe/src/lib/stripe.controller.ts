@@ -23,7 +23,8 @@ import {
   CreateSubscriptionItemDto,
   PriceDto,
   CreatePaymentIntentDto,
-  PaymentIntentResponse
+  PaymentIntentResponse,
+  UpdateSubscriptionDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -70,6 +71,13 @@ export class StripeController {
   @Get('/customer/:customerId')
   getCustomer(@Param('customerId') customerId: string): Promise<BaseDataResponse<any>> {
     return this.stripeService.getCustomer(customerId);
+  }
+
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Customer')
+  @Get('/customer/:email/by-email')
+  getCustomerByEmail(@Param('email') email: string): Promise<BaseDataResponse<any[]>> {
+    return this.stripeService.getCustomersByEmail(email);
   }
 
   @ApiResponse({ type: SubscriptionsResponse })
@@ -147,6 +155,13 @@ export class StripeController {
   @Post('/subscription/create')
   createSubscription(@Body() dto: CreateSubscriptionDto): Promise<SubscriptionResponse> {
     return this.stripeService.createSubscription(dto);
+  }
+
+  @ApiResponse({ type: SubscriptionResponse })
+  @ApiTags('Stripe: Subscription')
+  @Post('/subscription/:subscriptionId/update')
+  updateSubscription(@Param('subscriptionId') subscriptionId: string, @Body() dto: UpdateSubscriptionDto): Promise<SubscriptionResponse> {
+    return this.stripeService.updateSubscription(subscriptionId, dto);
   }
 
   @ApiResponse({ type: SubscriptionResponse })

@@ -38,8 +38,14 @@ const PaymentMethodTypes = [
   , 'us_bank_account'
   , 'wechat_pay'
 ]
-   
-export class SubscriptionCreateItemDto {
+
+export class SubscriptionUpdateItemDto {
+
+  @ApiPropertyOptional({ description: 'Subscription item to update.' })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -56,7 +62,7 @@ export class SubscriptionCreateItemDto {
   quantity?: number;
 }
 
-export class SubscriptionCreateBillingThresholdsDto {
+export class SubscriptionUpdateBillingThresholdsDto {
   @ApiPropertyOptional({
     description: 'Monetary threshold that triggers the subscription to advance to a new billing period'
   })
@@ -72,7 +78,7 @@ export class SubscriptionCreateBillingThresholdsDto {
   resetBillingCycleAnchor?: boolean;
 }
 
-export class AddInvoiceItemDto {
+export class UpdateInvoiceItemDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -94,7 +100,7 @@ export class AddInvoiceItemDto {
   taxRates?: Array<string>;
 }
 
-export class SubscriptionCreateMandateOptionsDto {
+export class SubscriptionUpdateMandateOptionsDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
@@ -114,11 +120,11 @@ export class SubscriptionCreateMandateOptionsDto {
   description?: string;
 }
 
-export class SubscriptionCreateCardDto {
+export class SubscriptionUpdateCardDto {
   @ApiPropertyOptional({
     description: 'Configuration options for setting up an eMandate for cards issued in India.'
   })
-  mandateOptions?: SubscriptionCreateMandateOptionsDto;
+  mandateOptions?: SubscriptionUpdateMandateOptionsDto;
 
   @ApiPropertyOptional({
     description: 'We strongly recommend that you rely on our SCA Engine to automatically prompt your customers for authentication based on risk level and [other requirements](https://stripe.com/docs/strong-customer-authentication). However, if you wish to request 3D Secure based on logic from your own fraud engine, provide this option. Read our guide on [manually requesting 3D Secure](https://stripe.com/docs/payments/3d-secure#manual-three-ds) for more information on how this configuration interacts with Radar and our SCA Engine.',
@@ -126,10 +132,10 @@ export class SubscriptionCreateCardDto {
   })
   @IsOptional()
   @IsEnum(['any', 'automatic'])
-  requestThreeDSecure?: Stripe.SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.Card.RequestThreeDSecure;
+  requestThreeDSecure?: Stripe.SubscriptionUpdateParams.PaymentSettings.PaymentMethodOptions.Card.RequestThreeDSecure;
 }
 
-export class SubscriptionCreateUsBankAccountDto {
+export class SubscriptionUpdateUsBankAccountDto {
 
   @ApiPropertyOptional({
     description: 'Additional fields for Financial Connections Session creation',
@@ -138,32 +144,32 @@ export class SubscriptionCreateUsBankAccountDto {
   })
   @IsOptional()
   @IsEnum(['balances', 'ownership', 'payment_method', 'transactions'])
-  financialConnections?: Array<Stripe.SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.FinancialConnections.Permission>;
+  financialConnections?: Array<Stripe.SubscriptionUpdateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.FinancialConnections.Permission>;
 
   @ApiPropertyOptional({
     enum: ['automatic', 'instant', 'microdeposits']
   })
   @IsOptional()
   @IsEnum(['automatic', 'instant', 'microdeposits'])
-  verificationMethod?: Stripe.SubscriptionCreateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.VerificationMethod;
+  verificationMethod?: Stripe.SubscriptionUpdateParams.PaymentSettings.PaymentMethodOptions.UsBankAccount.VerificationMethod;
 }
 
-export class SubscriptionCreatePaymentMethodOptionsDto {
+export class SubscriptionUpdatePaymentMethodOptionsDto {
   @ApiPropertyOptional({
     description: 'This sub-hash contains details about the Card payment method options to pass to the invoice\'s PaymentIntent.'
   })
-  card?: SubscriptionCreateCardDto;
+  card?: SubscriptionUpdateCardDto;
   @ApiPropertyOptional({
     description: 'This sub-hash contains details about the ACH direct debit payment method options to pass to the invoice\'s PaymentIntent.'
   })
-  usBankAccount?: SubscriptionCreateUsBankAccountDto;
+  usBankAccount?: SubscriptionUpdateUsBankAccountDto;
 }
 
-export class SubscriptionCreatePaymentSettingsDto {
+export class SubscriptionUpdatePaymentSettingsDto {
   @ApiPropertyOptional({
     description: 'Payment-method-specific configuration to provide to invoices created by the subscription.'
   })
-  paymentMethodOptions?: SubscriptionCreatePaymentMethodOptionsDto;
+  paymentMethodOptions?: SubscriptionUpdatePaymentMethodOptionsDto;
 
   @ApiPropertyOptional({
     description: 'The list of payment method types (e.g. card) to provide to the invoice\'s PaymentIntent. If not set, Stripe attempts to automatically determine the types to use by looking at the invoice\'s default payment method, the subscription\'s default payment method, the customer\'s default payment method, and your [invoice template settings](https://dashboard.stripe.com/settings/billing/invoice).',
@@ -171,7 +177,7 @@ export class SubscriptionCreatePaymentSettingsDto {
   })
   @IsOptional()
   @IsEnum(PaymentMethodTypes)
-  paymentMethodTypes?: Array<Stripe.SubscriptionCreateParams.PaymentSettings.PaymentMethodType>;
+  paymentMethodTypes?: Array<Stripe.SubscriptionUpdateParams.PaymentSettings.PaymentMethodType>;
 
   @ApiPropertyOptional({
     description: 'Either `off`, or `on_subscription`. With `on_subscription` Stripe updates `subscription.default_payment_method` when a subscription payment succeeds.',
@@ -179,19 +185,15 @@ export class SubscriptionCreatePaymentSettingsDto {
   })
   @IsOptional()
   @IsEnum(['off', 'on_subscription'])
-  saveDefaultPaymentMethod?: Stripe.SubscriptionCreateParams.PaymentSettings.SaveDefaultPaymentMethod;
+  saveDefaultPaymentMethod?: Stripe.SubscriptionUpdateParams.PaymentSettings.SaveDefaultPaymentMethod;
 }
 
-export class CreateSubscriptionDto {
-  @ApiProperty({ required: true })
-  @IsNotEmpty()
-  @IsString()
-  customerId: string;
+export class UpdateSubscriptionDto {
 
-  @ApiProperty({ required: true, isArray: true, type: SubscriptionCreateItemDto })
+  @ApiProperty({ required: true, isArray: true, type: SubscriptionUpdateItemDto })
   @IsNotEmpty()
   @IsArray()
-  items: Array<SubscriptionCreateItemDto>;
+  items: Array<SubscriptionUpdateItemDto>;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -221,14 +223,14 @@ export class CreateSubscriptionDto {
     + 'Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription\'s first invoice cannot be paid. For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not create a subscription and returns an error instead. This was the default behavior for API versions prior to 2019-03-14. See the [changelog](https://stripe.com/docs/upgrades#2019-03-14) to learn more.'
     + '`pending_if_incomplete` is only used with updates and cannot be passed when creating a subscription.'
   })
-  paymentBehavior?: Stripe.SubscriptionCreateParams.PaymentBehavior;
+  paymentBehavior?: Stripe.SubscriptionUpdateParams.PaymentBehavior;
 
   @ApiPropertyOptional({
     description: 'A list of prices and quantities that will generate invoice items appended to the first invoice for this subscription. You may pass up to 20 items.',
     isArray: true,
-    type: AddInvoiceItemDto
+    type: UpdateInvoiceItemDto
   })
-  addInvoiceItems?: Array<AddInvoiceItemDto>;
+  addInvoiceItems?: Array<UpdateInvoiceItemDto>;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -241,19 +243,17 @@ export class CreateSubscriptionDto {
   automaticTax?: CreateAutomaticTaxDto;
 
   @ApiPropertyOptional({
-    description: 'For new subscriptions, a past timestamp to backdate the subscription\'s start date to. If set, the first invoice will contain a proration for the timespan between the start date and the current time. Can be combined with trials and the billing cycle anchor.'
+    description: 'Either `now` or `unchanged`. Setting the value to `now` resets the subscription\'s billing cycle anchor to the current time (in UTC). For more information, see the billing cycle [documentation](https://stripe.com/docs/billing/subscriptions/billing-cycle).',
+    enum: ['now', 'unchanged']
   })
-  backdateStartDate?: number;
-
-  @ApiPropertyOptional({
-    description: 'A future timestamp to anchor the subscription\'s [billing cycle](https://stripe.com/docs/subscriptions/billing-cycle). This is used to determine the date of the first full invoice, and, for plans with `month` or `year` intervals, the day of the month for subsequent invoices. The timestamp is in UTC format.'
-  })
-  billingCycleAnchor?: number;
+  @IsOptional()
+  @IsEnum(['now', 'unchanged'])
+  billingCycleAnchor?: Stripe.SubscriptionUpdateParams.BillingCycleAnchor;
 
   @ApiPropertyOptional({
     description: 'Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. Pass an empty string to remove previously-defined thresholds.'
   })
-  billingThresholds?: SubscriptionCreateBillingThresholdsDto;
+  billingThresholds?: SubscriptionUpdateBillingThresholdsDto;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -265,7 +265,7 @@ export class CreateSubscriptionDto {
   })
   @IsOptional()
   @IsEnum(['charge_automatically', 'send_invoice'])
-  collectionMethod?: Stripe.SubscriptionCreateParams.CollectionMethod;
+  collectionMethod?: Stripe.SubscriptionUpdateParams.CollectionMethod;
 
   @ApiPropertyOptional()
   couponId?: string;
@@ -299,7 +299,7 @@ export class CreateSubscriptionDto {
   @ApiPropertyOptional({
     description: 'Payment settings to pass to invoices created by the subscription.'
   })
-  paymentSettings?: SubscriptionCreatePaymentSettingsDto;
+  paymentSettings?: SubscriptionUpdatePaymentSettingsDto;
 
   @ApiPropertyOptional({
     description: 'The API ID of a promotion code to apply to this subscription. A promotion code applied to a subscription will only affect invoices created for that particular subscription.'
