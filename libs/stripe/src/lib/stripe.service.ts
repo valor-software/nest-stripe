@@ -38,6 +38,8 @@ import {
   CreatePaymentIntentDto,
   PaymentIntentResponse,
   PaymentIntentDto,
+  UpdateSubscriptionDto,
+  CustomerDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -159,15 +161,28 @@ export class StripeService {
     }
   }
 
-  async getCustomer(customerId: string): Promise<BaseDataResponse<Stripe.Customer>> {
+  async getCustomer(customerId: string): Promise<BaseDataResponse<CustomerDto>> {
     try {
       const customer = await this.stripe.customers.retrieve(customerId);
       return {
         success: true,
-        data: customer as Stripe.Customer
+        data: this.customerToDto(customer as Stripe.Customer)
       }
     } catch (exception) {
       return this.handleError(exception, 'Get Customer');
+    }
+  }
+
+  async getCustomersByEmail(email: string): Promise<BaseDataResponse<CustomerDto[]>> {
+    try {
+      const query = `email:"${email}"`;
+      const customer = await this.stripe.customers.search({query});
+      return {
+        success: true,
+        data: customer.data.map(c => this.customerToDto(c))
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Customer List by Email');
     }
   }
 
@@ -357,9 +372,11 @@ export class StripeService {
     try {
       const subscription = await this.stripe.subscriptions.create({
         customer: dto.customerId,
-        items: [{
-          price: dto.priceId
-        }],
+        items: dto.items.map(i => ({
+          price: i.priceId,
+          plan: i.planId,
+          quantity: i.quantity
+        })),
         add_invoice_items: dto.addInvoiceItems?.map(i => ({
           price: i.priceId,
           quantity:i.quantity,
@@ -423,6 +440,71 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Create Subscription');
+    }
+  }
+
+  async updateSubscription(subscriptionId: string, dto: UpdateSubscriptionDto): Promise<SubscriptionResponse> {
+    try {
+      const subscription = await this.stripe.subscriptions.update(subscriptionId, {
+        items: dto.items.map(i => ({
+          price: i.priceId,
+          plan: i.planId,
+          quantity: i.quantity
+        })),
+        add_invoice_items: dto.addInvoiceItems?.map(i => ({
+          price: i.priceId,
+          quantity:i.quantity,
+          tax_rates: i.taxRates
+        })),
+        application_fee_percent: dto.applicationFeePercent,
+        automatic_tax: dto.automaticTax,
+        billing_cycle_anchor: dto.billingCycleAnchor,
+        billing_thresholds: dto.billingThresholds ? {
+          amount_gte: dto.billingThresholds.amountGte,
+          reset_billing_cycle_anchor: dto.billingThresholds.resetBillingCycleAnchor
+        } : undefined,
+        cancel_at: dto.cancelAt,
+        cancel_at_period_end: dto.cancelAtPeriodEnd,
+        collection_method: dto.collectionMethod,
+        coupon: dto.couponId,
+        default_payment_method: dto.defaultPaymentMethod,
+        description: dto.description,
+        metadata: dto.metadata,
+        payment_behavior: dto.paymentBehavior || 'default_incomplete',
+        days_until_due: dto.daysUntilDue,
+        default_source: dto.defaultSource,
+        default_tax_rates: dto.defaultTaxRates,
+        off_session: dto.offSession,
+        payment_settings: dto.paymentSettings ? {
+          payment_method_options: dto.paymentSettings.paymentMethodOptions ? {
+            card: dto.paymentSettings.paymentMethodOptions.card ? {
+              mandate_options: {
+                amount: dto.paymentSettings.paymentMethodOptions.card.mandateOptions.amount,
+                amount_type: dto.paymentSettings.paymentMethodOptions.card.mandateOptions.amountType,
+                description: dto.paymentSettings.paymentMethodOptions.card.mandateOptions.description
+              },
+              request_three_d_secure: dto.paymentSettings.paymentMethodOptions.card.requestThreeDSecure
+            } : undefined,
+            us_bank_account: {
+              financial_connections: {
+                permissions: dto.paymentSettings.paymentMethodOptions.usBankAccount?.financialConnections
+              },
+              verification_method: dto.paymentSettings.paymentMethodOptions.usBankAccount?.verificationMethod
+            }
+          } : undefined,
+          payment_method_types: dto.paymentSettings.paymentMethodTypes,
+          save_default_payment_method: dto.paymentSettings.saveDefaultPaymentMethod
+        } : undefined,
+        promotion_code: dto.promotionCode,
+        trial_end: dto.trialEnd,
+        trial_from_plan: dto.trialFromPlan
+      });
+      return {
+        success: true,
+        subscriptionId: subscription.id
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Update Subscription');
     }
   }
 
@@ -676,7 +758,7 @@ export class StripeService {
 
   private addressToDto(address: Stripe.Address | undefined): AddressDto | undefined {
     if (!address) {
-      return address as undefined;
+      return address as undefined | null;
     }
     return {
       city: address.city,
@@ -686,6 +768,34 @@ export class StripeService {
       postalCode: address.postal_code,
       state: address.state
     };
+  }
+
+  private customerToDto(customer: Stripe.Customer): CustomerDto {
+    return {
+      id: customer.id,
+      object: customer.object,
+      address: this.addressToDto(customer.address),
+      balance: customer.balance,
+      created: customer.created,
+      currency: customer.currency,
+      defaultSource: customer.default_source as string | null,
+      delinquent: customer.delinquent,
+      description: customer.description,
+      discount: customer.discount,
+      email: customer.email,
+      invoicePrefix: customer.invoice_prefix,
+      invoiceSettings: customer.invoice_settings ? {
+        customFields: customer.invoice_settings.custom_fields,
+        defaultPaymentMethod: customer.invoice_settings.default_payment_method,
+        footer: customer.invoice_settings.footer
+      } : null,
+      liveMode: customer.livemode,
+      metadata: customer.metadata,
+      name: customer.name,
+      nextInvoiceSequence: customer.next_invoice_sequence,
+      phone: customer.phone,
+      preferredLocales: customer.preferred_locales
+    }
   }
 
   private subscriptionToDto(subscription: Stripe.Subscription): SubscriptionDto {
