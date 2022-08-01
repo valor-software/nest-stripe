@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Post, RawBodyRequest, Req } from '@nestjs/common';
+import { BadRequestException, Controller, Logger, Post, RawBodyRequest, Req } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import Stripe from 'stripe';
@@ -22,7 +22,7 @@ export class WebhookController {
       this.webhookService.notifyPaymentIntentCreated(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
 
@@ -35,7 +35,7 @@ export class WebhookController {
       this.webhookService.notifyPaymentIntentCreated(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
 
@@ -47,7 +47,7 @@ export class WebhookController {
       this.webhookService.notifyPaymentIntentSucceeded(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
 
@@ -59,7 +59,7 @@ export class WebhookController {
       this.webhookService.notifyPaymentIntentCanceled(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
   //#endregion
@@ -73,7 +73,7 @@ export class WebhookController {
       this.webhookService.notifyChargeRefunded(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
 
@@ -85,7 +85,7 @@ export class WebhookController {
       this.webhookService.notifyChargeSucceeded(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
 
@@ -97,7 +97,7 @@ export class WebhookController {
       this.webhookService.notifyChargeFailed(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
   //#endregion
@@ -117,7 +117,7 @@ export class WebhookController {
       this.webhookService.notifyInvoicePaymentSucceeded(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
   @ApiResponse({ type: WebhookResponse })
@@ -128,7 +128,7 @@ export class WebhookController {
       this.webhookService.notifyInvoicePaymentFailed(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
   @ApiResponse({ type: WebhookResponse })
@@ -139,7 +139,7 @@ export class WebhookController {
       this.webhookService.notifyInvoicePaymentFinalized(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
   //#endregion
@@ -153,7 +153,7 @@ export class WebhookController {
       this.webhookService.notifyCustomerSubscriptionDeleted(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
   @ApiResponse({ type: WebhookResponse })
@@ -164,7 +164,7 @@ export class WebhookController {
       this.webhookService.notifyCustomerSubscriptionTrialWillEnd(evt);
       return { success: true }
     } catch (error) {
-      throw new BadRequestException(error)
+      this.handleError(error);
     }
   }
   //#endregion
@@ -173,5 +173,10 @@ export class WebhookController {
     const payload = req.rawBody.toString('utf-8');
       const headerSignature = req.header('stripe-signature');
       return this.stripeService.buildWebhookEvent(payload, headerSignature);
+  }
+
+  private handleError(error: any) {
+    Logger.error(error, 'Webhook handler');
+    throw new BadRequestException(error);
   }
 }
