@@ -356,10 +356,11 @@ export class StripeService {
     return this.priceToDto(price);
   }
 
-  async getPriceList(): Promise<BaseDataResponse<PriceDto[]>> {
+  async getPriceList(productId?: string): Promise<BaseDataResponse<PriceDto[]>> {
     try {
       const prices = await this.stripe.prices.list({
-        expand: ['data.product']
+        product: productId,
+        expand: productId ? undefined : ['data.product']
       });
       return {
         success: true,
@@ -372,10 +373,15 @@ export class StripeService {
 
   async getProductList(): Promise<BaseDataResponse<ProductDto[]>> {
     try {
-      const prices = await this.stripe.products.list();
+      const productList = await this.stripe.products.list();
+      const products = productList.data.map((p) => this.productToDto(p));
+      await Promise.all(products.map(async (p, i) => {
+        const prices = await this.getPriceList(p.id);
+        products[i].prices = prices.data;
+      }))
       return {
         success: true,
-        data: prices.data.map((p) => this.productToDto(p))
+        data: products
       };
     } catch (exception) {
       return this.handleError(exception, 'Get Product List');

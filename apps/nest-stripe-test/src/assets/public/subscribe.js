@@ -1,6 +1,7 @@
 let M = window['M'];
 let paymentMethodId = null;
 let stripe = null;
+let productList = [];
 const customerId = localStorage.getItem('customerId');
 const productListEl = document.querySelector('#product-list');
 const paymentMethodsEl = document.querySelector('#payment-method-list');
@@ -54,15 +55,15 @@ async function loadPaymentMethodList() {
 }
 
 async function loadProductList() {
-  const res  = await fetch(`api/stripe/price`);
+  const res  = await fetch(`api/stripe/product`);
   const productListResponse = await res.json();
   if (productListResponse.success) {
-    const productList = productListResponse.data;
+    productList = productListResponse.data;
     //productListEl.addEventListener('change', () => onPaymentMethodChange());
     productListEl.innerHTML='';
     productList.forEach(p => {
       const el = document.createElement('option');
-      el.textContent = p.product?.name;
+      el.textContent = p.name;
       el.value = p.id;
       productListEl.appendChild(el);
     });
@@ -214,7 +215,8 @@ function createPaymentMethod() {
 }
 
 function createSubscription({ customerId, paymentMethodId }) {
-  const priceId = productListEl.value;
+  const product = productList.find(p => p.id = productListEl.value);
+  const items = product.prices.map(p => ({ priceId: p.id }));
   return fetch(`/api/stripe/customer/${customerId}/attach-payment-method/${paymentMethodId}`, {
       method: 'post',
       headers: {
@@ -236,7 +238,7 @@ function createSubscription({ customerId, paymentMethodId }) {
         },
         body: JSON.stringify({
           customerId: customerId,
-          items: [{priceId}],
+          items,
         })
       })
     })

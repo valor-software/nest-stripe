@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { BaseDto } from '../base.dto';
 import { PriceDto } from './price.dto';
@@ -45,5 +45,8 @@ export class ProductDto extends BaseDto {
 
   @ApiProperty()
   url: string | null;
+
+  @ApiPropertyOptional({ isArray: true, type: PriceDto })
+  prices?: PriceDto[];
 
 }
