@@ -281,9 +281,9 @@ function createSubscription({ customerId, paymentMethodId }) {
     });
 }
 
-function onSubscriptionComplete(result) {
+function onSubscriptionComplete({result}) {
   // Payment was successful.
-  if (result.status === 'active') {
+  if (result.status === 'active' || result.status === 'succeeded') {
     // Change your UI to show a success message to your customer.
     // Call your backend to grant access to your service based on
     // `result.subscription.items.data[0].price.product` the customer subscribed to.
@@ -293,10 +293,7 @@ function onSubscriptionComplete(result) {
   }
 }
 
-function handlePaymentThatRequiresCustomerAction({
-  result,
-  isRetry
-}) {
+function handlePaymentThatRequiresCustomerAction({result}) {
   if (result.status === 'active') {
     // Subscription is active, no customer actions required.
     return { result };
@@ -321,8 +318,7 @@ function handlePaymentThatRequiresCustomerAction({
         } else {
           if (result.paymentIntent.status === 'succeeded') {
             // Show a success message to your customer.
-            alert('Succeed');
-            return result.paymentIntent;
+            return { result: result.paymentIntent };
           }
         }
       })
@@ -349,7 +345,7 @@ function handleRequiresPaymentMethod({
     localStorage.setItem('latestInvoicePaymentIntentStatus', result.paymentIntentStatus);
     throw { error: { message: 'Your card was declined.' } };
   } else {
-    return { result };
+    return {result};
   }
 }
 
