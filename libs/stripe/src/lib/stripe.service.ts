@@ -364,7 +364,19 @@ export class StripeService {
         data: prices.data.map((p) => this.priceToDto(p))
       };
     } catch (exception) {
-      return this.handleError(exception, 'Create Price');
+      return this.handleError(exception, 'Get Price List');
+    }
+  }
+
+  async getProductList(): Promise<BaseDataResponse<ProductDto[]>> {
+    try {
+      const prices = await this.stripe.products.list();
+      return {
+        success: true,
+        data: prices.data.map((p) => this.productToDto(p))
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Get Product List');
     }
   }
 
@@ -1106,7 +1118,7 @@ export class StripeService {
     let defaultPrice = null;
     if (typeof product.default_price === 'string') {
       defaultPrice = product.default_price;
-    } else {
+    } else if (product.default_price) {
       defaultPrice = this.priceToDto(product.default_price as Stripe.Price);
     }
     return {

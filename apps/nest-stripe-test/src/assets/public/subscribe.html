@@ -2,10 +2,27 @@
   <title>Subscription prices</title>
   <link rel="stylesheet" href="subscribe.css" />
   <script src="https://js.stripe.com/v3/"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="stripe.js" defer></script>
   <script src="subscribe.js" defer></script>
 </head>
 <body>
   <form id="payment-form">
+    <div class="row">
+      <div class="input-field col s12">
+        <select id="product-list"></select>
+        <label>Select Product</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col s12">
+        <select id="payment-method-list">
+          <option value="">Create new</option>
+        </select>
+        <label>Select Payment Method</label>
+      </div>
+    </div>
     <div id="card-element">
       <!-- Elements will create input elements here -->
     </div>
@@ -13,5 +30,6 @@
     <!-- We'll put the error messages in this element -->
     <div id="card-element-errors" role="alert"></div>
     <button type="submit">Subscribe</button>
+    <div class="red accent-1" id="error-text"></div>
   </form>
 </body>

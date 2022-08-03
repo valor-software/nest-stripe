@@ -7,7 +7,9 @@ export class AppService {
     this.stripeWebhookService.paymentIntentCreated$.subscribe(console.log)
   }
 
-  getData(): { message: string } {
-    return { message: 'Welcome to nest-stripe-test!' };
+  getConfig(): any {
+    return {
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY
+    };
   }
 }

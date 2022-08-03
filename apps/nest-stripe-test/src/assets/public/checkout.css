@@ -14,7 +14,7 @@ body {
   width: 100vw;
 }
 
-form {
+.form-wrap {
   width: 30vw;
   min-width: 500px;
   align-self: center;

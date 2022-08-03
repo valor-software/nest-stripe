@@ -1,24 +1,25 @@
-// This is your test publishable API key.
-// eslint-disable-next-line no-undef
-const stripe = Stripe("pk_test_51LLQ2WDqFfDeJ7rty32Q8eJPoihnDZx1ynRxwtlfF3ch0gIHNdned4XIN7xzlrv0oWHYLAEgZvc7MsIEV2dHx9gc00Yd1FygN9");
-
+let stripe = window['stripe'];
 // The items the customer wants to buy
 //const items = [{ id: "xl-tshirt", price: 700, displayName: 'XL T-Shirt', quantity: 1 }];
-//const items = [{ productId: "prod_M82Fj866VdTuJy", quantity: 1, price: 85 }];
-const items = [{ priceId: "price_1LPmBKDqFfDeJ7rtNWuUVbC6", quantity: 1, price: 85 }];
+const items = [
+  { productId: "prod_MAHvyI0ygKWrcH", quantity: 1, price: 899 },
+];
+//const items = [{ priceId: "price_1LPmBKDqFfDeJ7rtNWuUVbC6", quantity: 1, price: 85 }];
 
 let elements;
 
-initialize();
+//initialize();
 checkStatus();
-
-document
-  .querySelector("#payment-form")
-  .addEventListener("submit", handleSubmit);
 
 // Fetches a payment intent and captures the client secret
 async function initialize() {
-  const response = await fetch("/api/stripe/checkout-session/create", {
+  document.querySelector('.proceed-to-payment').classList.add('hidden');
+  document.querySelector('.payment-form').classList.remove('hidden');
+  document
+    .querySelector("#payment-form")
+    .addEventListener("submit", handleSubmit);
+
+  const response = await fetch("/api/stripe/payment-intent/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ items, mode: 'subscription' }),
@@ -76,7 +77,7 @@ async function initialize() {
       },
     },
   };
-  stripe.redirectToCheckout({sessionId});
+  //stripe.redirectToCheckout({sessionId});
   elements = stripe.elements({ appearance, clientSecret });
 
   const paymentElement = elements.create("payment");
@@ -91,7 +92,7 @@ async function handleSubmit(e) {
     elements,
     confirmParams: {
       // Make sure to change this to your payment completion page
-      return_url: "http://localhost:3333/checkout.html",
+      return_url: "http://localhost:3350/checkout.html",
     },
   });
 
@@ -140,14 +141,18 @@ async function checkStatus() {
 // ------- UI helpers -------
 
 function showMessage(messageText) {
-  const messageContainer = document.querySelector("#payment-message");
+  const messageContainer = document.querySelectorAll(".payment-message");
 
-  messageContainer.classList.remove("hidden");
-  messageContainer.textContent = messageText;
+  messageContainer.forEach(el => {
+    el.classList.remove("hidden");
+    el.textContent = messageText;
+  });
 
   setTimeout(function () {
-    messageContainer.classList.add("hidden");
-    messageText.textContent = "";
+    messageContainer.forEach(el => {
+      el.classList.add("hidden");
+      el.textContent = "";
+    });
   }, 4000);
 }
 

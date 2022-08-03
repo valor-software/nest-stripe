@@ -8,21 +8,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="checkout.css" />
   <script src="https://js.stripe.com/v3/"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="stripe.js" defer></script>
   <script src="checkout.js" defer></script>
 </head>
 
 <body>
-  <!-- Display a payment form -->
-  <form id="payment-form">
-    <div id="payment-element">
-      <!--Stripe.js injects the Payment Element-->
-    </div>
-    <button id="submit">
-      <div class="spinner hidden" id="spinner"></div>
-      <span id="button-text">Pay now</span>
+  <div class="form-wrap proceed-to-payment">
+    <button id="button-proceed" onclick="initialize()">
+      <span>Proceed to payment</span>
     </button>
-    <div id="payment-message" class="hidden"></div>
-  </form>
+    <div class="payment-message" class="hidden"></div>
+  </div>
+  <div class="hidden form-wrap payment-form">
+    <!-- Display a payment form -->
+    <form id="payment-form">
+      <div id="payment-element">
+        <!--Stripe.js injects the Payment Element-->
+      </div>
+      <button id="submit">
+        <div class="spinner hidden" id="spinner"></div>
+        <span id="button-text">Pay now</span>
+      </button>
+      <div class="payment-message" class="hidden"></div>
+    </form>
+  </div>
 </body>
 
 </html>

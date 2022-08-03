@@ -1,5 +1,6 @@
 import { StripeModule } from '@nest/stripe';
 import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
 
 import { AppService } from './app.service';
 import { AppAuthGuard } from './auth.guard';
@@ -12,7 +13,7 @@ import { AppAuthGuard } from './auth.guard';
     cancelUrl: 'http://localhost:3333/card',
     currency: 'usd'
   }, AppAuthGuard)],
-  controllers: [],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

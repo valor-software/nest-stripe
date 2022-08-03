@@ -1,66 +1,138 @@
-// Set your publishable key: remember to change this to your live publishable key in production
-// See your keys here: https://dashboard.stripe.com/apikeys
-// eslint-disable-next-line no-undef
-let stripe = Stripe('pk_test_51LLQ2WDqFfDeJ7rty32Q8eJPoihnDZx1ynRxwtlfF3ch0gIHNdned4XIN7xzlrv0oWHYLAEgZvc7MsIEV2dHx9gc00Yd1FygN9'
-);
-const customerId = 'cus_M8mi4joSIWeSQu';
-const items = [{ priceId: "price_1LPmBKDqFfDeJ7rtNWuUVbC6", quantity: 1, price: 85 }];
+let M = window['M'];
+let paymentMethodId = null;
+let stripe = null;
+const customerId = localStorage.getItem('customerId');
+//const items = [{ priceId: "price_1LPmBKDqFfDeJ7rtNWuUVbC6", quantity: 1, price: 85 }];
+const productListEl = document.querySelector('#product-list');
+const paymentMethodsEl = document.querySelector('#payment-method-list');
 
-const appearance = {
-    theme: 'none',
+document.addEventListener('DOMContentLoaded', function() {
+  var elems = document.querySelectorAll('select');
+  M.FormSelect.init(elems);
+});
+const form = document.getElementById('payment-form');
 
-    variables: {
-      colorPrimary: '#A873FF',
-      colorBackground: '#2F3858',
-      colorText: '#CAD1EA',
-      colorDanger: '#FF7B7B',
-      fontFamily: 'Lato\', \'Open Sans\', system-ui, sans-serif',
-      spacingUnit: '2px',
-      borderRadius: '8px',
-      fontSizeBase: '16px',
-      colorSuccess: '#54C752',
-      colorWarning: '#F8BF8A',
-      colorIcon: '#7B84A3',
-      colorIconHover: '#C19FF9',		
-    },
-    rules: {
-    '.Tab': {
-        border: '2px solid #465380',
-      },
-      '.Tab:focus': {
-        border: '4px solid rgba(145, 58, 232, 0.44)',  
-      },
-      '.Input': {
-        color: '#CAD1EA',
-      },
-      '.Input::placeholder': {
-        color: '#7B84A3',
-      },
-      '.Label': {
-        color: '#CAD1EA',
-        fontSize: '14px',
-        fontWeight: '700',
-      },
-      '.Block': {
-        colorBackground: '#262D47',
-        borderRadius: '16px'
-      },
-      '.BlockDivider': {
-        backgroundColor: '#465380',
-      },
-      '.BlockAction	': {
-        color: '#A873FF',
-      },
-    },
-  };
+form.addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  if (paymentMethodId) {
+    createSubscription({customerId, paymentMethodId })
+  } else {
+    createPaymentMethod();
+  }
+});
 
-let elements = stripe.elements({ appearance });
-
-function showCardError(error) {
-  console.error(error);
+function onPaymentMethodChange() {
+  paymentMethodId = paymentMethodsEl.value;
+  if (paymentMethodId) {
+    hideCardElement();
+  } else {
+    showCardElement()
+    initializeCardElement();
+  }
 }
 
-let card = elements.create('card',{
+async function loadPaymentMethodList() {
+  const res  = await fetch(`api/stripe/customer/${customerId}/payment-method-list?type=card`);
+  const paymentMethodsResponse = await res.json();
+  if (paymentMethodsResponse.success) {
+    paymentMethods = paymentMethodsResponse.data;
+    paymentMethodsEl.addEventListener('change', () => onPaymentMethodChange());
+    const pmEl = paymentMethodsEl.children[0].cloneNode(true);
+    paymentMethodsEl.innerHTML='';
+    paymentMethodsEl.appendChild(pmEl);
+    paymentMethods.forEach(pm => {
+      const el = document.createElement('option');
+      el.textContent = `**** **** **** ${pm.card.last4} ${pm.card.exp_month} / ${pm.card.exp_year}`;
+      el.value = pm.id;
+      paymentMethodsEl.appendChild(el);
+    });
+    M.FormSelect.init(paymentMethodsEl);
+    onPaymentMethodChange();
+  } else {
+    console.error(paymentMethodsResponse);
+    showCardError(paymentMethodsResponse.errorMessage);
+  }
+}
+
+async function loadProductList() {
+  const res  = await fetch(`api/stripe/product`);
+  const productListResponse = await res.json();
+  if (productListResponse.success) {
+    const productList = productListResponse.data;
+    //productListEl.addEventListener('change', () => onPaymentMethodChange());
+    productListEl.innerHTML='';
+    productList.forEach(p => {
+      const el = document.createElement('option');
+      el.textContent = p.name;
+      el.value = p.id;
+      productListEl.appendChild(el);
+    });
+    M.FormSelect.init(productListEl);
+  } else {
+    console.error(productListResponse);
+    showCardError(productListResponse.errorMessage);
+  }
+}
+
+let paymentMethods = [];
+(function() {
+  loadPaymentMethodList();
+  loadProductList();
+})();
+
+const appearance = {
+  theme: 'stripe',
+
+  variables: {
+    colorPrimary: '#A873FF',
+    colorBackground: '#2F3858',
+    colorText: '#CAD1EA',
+    colorDanger: '#FF7B7B',
+    fontFamily: 'Lato\', \'Open Sans\', system-ui, sans-serif',
+    spacingUnit: '2px',
+    borderRadius: '8px',
+    fontSizeBase: '16px',
+    colorSuccess: '#54C752',
+    colorWarning: '#F8BF8A',
+    colorIcon: '#7B84A3',
+    colorIconHover: '#C19FF9',		
+  },
+  rules: {
+  '.Tab': {
+      border: '2px solid #465380',
+    },
+    '.Tab:focus': {
+      border: '4px solid rgba(145, 58, 232, 0.44)',  
+    },
+    '.Input': {
+      color: '#CAD1EA',
+    },
+    '.Input::placeholder': {
+      color: '#7B84A3',
+    },
+    '.Label': {
+      color: '#CAD1EA',
+      fontSize: '14px',
+      fontWeight: '700',
+    },
+    '.Block': {
+      colorBackground: '#262D47',
+      borderRadius: '16px'
+    },
+    '.BlockDivider': {
+      backgroundColor: '#465380',
+    },
+    '.BlockAction	': {
+      color: '#A873FF',
+    },
+  },
+};
+
+function showCardError(text) {
+  document.querySelector('#error-text').textContent = text;
+}
+
+const style = {
   style: {
     base: {
       iconColor: appearance.variables.colorIcon,
@@ -81,14 +153,30 @@ let card = elements.create('card',{
       color: appearance.variables.colorDanger,
     },
   }
-});
-card.mount('#card-element');
+}
 
-card.on('change', function (event) {
-  displayError(event);
-});
+let card = null;
+function initializeCardElement() {
+  stripe = window['stripe'];
+  let elements = stripe.elements({ appearance });
+  card = elements.create('card', style);
+  card.mount('#card-element');
 
-window['cardRef'] = card;
+  card.on('change', function (event) {
+    displayError(event);
+  });
+
+  window['cardRef'] = card;
+}
+
+function showCardElement() {
+  const cardEl = document.querySelector('#card-element');
+  cardEl.classList.remove('hidden');
+}
+function hideCardElement() {
+  const cardEl = document.querySelector('#card-element');
+  cardEl.classList.add('hidden');
+}
 
 
 function displayError(event) {
@@ -101,26 +189,9 @@ function displayError(event) {
   }
 }
 
-var form = document.getElementById('payment-form');
-
-form.addEventListener('submit', function (ev) {
-  ev.preventDefault();
-  stripe.createToken(card).then(function(result) {
-    if (result.error) {
-      displayError(result);
-    } else {
-      // Send the token to your server
-      createPaymentMethod(result.token);
-    }
-  });
-  //createPaymentMethod(ev);
-});
-
-function createPaymentMethod(v) {
+function createPaymentMethod() {
   // Set up payment method for recurring usage
   let billingName = 'OLEKSANDR PAVLOVSKYI';
-
-  let priceId = items[0].priceId
 
   stripe
     .createPaymentMethod({
@@ -134,17 +205,17 @@ function createPaymentMethod(v) {
       if (result.error) {
         displayError(result);
       } else {
+        loadPaymentMethodList();
         createSubscription({
           customerId: customerId,
-          paymentMethodId: result.paymentMethod.id,
-          priceId: priceId,
+          paymentMethodId: result.paymentMethod.id
         });
       }
     });
 }
 
-
-function createSubscription({ customerId, paymentMethodId, priceId }) {
+function createSubscription({ customerId, paymentMethodId }) {
+  const productId = productListEl.value;
   return fetch(`/api/stripe/customer/${customerId}/attach-payment-method/${paymentMethodId}`, {
       method: 'post',
       headers: {
@@ -166,7 +237,7 @@ function createSubscription({ customerId, paymentMethodId, priceId }) {
         },
         body: JSON.stringify({
           customerId: customerId,
-          items: [{priceId}],
+          items: [{productId}],
         })
       })
     })
@@ -185,8 +256,6 @@ function createSubscription({ customerId, paymentMethodId, priceId }) {
     // Add the additional details we need.
     .then((result) => {
       return {
-        paymentMethodId: paymentMethodId,
-        priceId: priceId,
         result,
         isRetry: false
       };
@@ -224,14 +293,12 @@ function onSubscriptionComplete(result) {
 }
 
 function handlePaymentThatRequiresCustomerAction({
-  priceId,
-  paymentMethodId,
   result,
   isRetry
 }) {
   if (result.status === 'active') {
     // Subscription is active, no customer actions required.
-    return { result, priceId, paymentMethodId };
+    return { result };
   }
 
   // If it's a first payment attempt, the payment intent is on the subscription latest invoice.
@@ -263,18 +330,16 @@ function handlePaymentThatRequiresCustomerAction({
       });
   } else {
     // No customer action needed.
-    return { result, priceId, paymentMethodId };
+    return { result };
   }
 }
 
 function handleRequiresPaymentMethod({
-  result,
-  paymentMethodId,
-  priceId,
+  result
 }) {
   if (result.status === 'succeeded' || result.status === 'active') {
     // subscription is active, no customer actions required.
-    return { result, priceId, paymentMethodId };
+    return { result };
   } else if (result.paymentIntentStatus === 'requires_payment_method') {
     // Using localStorage to manage the state of the retry here,
     // feel free to replace with what you prefer.
@@ -283,7 +348,7 @@ function handleRequiresPaymentMethod({
     localStorage.setItem('latestInvoicePaymentIntentStatus', result.paymentIntentStatus);
     throw { error: { message: 'Your card was declined.' } };
   } else {
-    return { result, priceId, paymentMethodId };
+    return { result };
   }
 }
 

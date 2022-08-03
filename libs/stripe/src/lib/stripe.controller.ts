@@ -24,7 +24,8 @@ import {
   PriceDto,
   CreatePaymentIntentDto,
   PaymentIntentResponse,
-  UpdateSubscriptionDto
+  UpdateSubscriptionDto,
+  ProductDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -147,6 +148,13 @@ export class StripeController {
   @Get('/price')
   priceList(): Promise<BaseDataResponse<PriceDto[]>> {
     return this.stripeService.getPriceList();
+  }
+
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Product')
+  @Get('/product')
+  productList(): Promise<BaseDataResponse<ProductDto[]>> {
+    return this.stripeService.getProductList();
   }
 
   //#region Subscription
