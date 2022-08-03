@@ -358,7 +358,9 @@ export class StripeService {
 
   async getPriceList(): Promise<BaseDataResponse<PriceDto[]>> {
     try {
-      const prices = await this.stripe.prices.list();
+      const prices = await this.stripe.prices.list({
+        expand: ['data.product']
+      });
       return {
         success: true,
         data: prices.data.map((p) => this.priceToDto(p))
@@ -1085,6 +1087,12 @@ export class StripeService {
   }
 
   private priceToDto(price: Stripe.Price): PriceDto {
+    let product = null;
+    if (typeof price.product === 'string') {
+      product = price.product;
+    } else if (price.product) {
+      product = this.productToDto(price.product as Stripe.Product);
+    }
     return {
       id: price.id,
       object: price.object,
@@ -1096,7 +1104,7 @@ export class StripeService {
       lookupKey: price.lookup_key,
       metadata: price.metadata,
       nickname: price.nickname,
-      product: price.product,
+      product,
       recurring: price.recurring ? {
         aggregateUsage: price.recurring.aggregate_usage,
         interval: price.recurring.interval,
