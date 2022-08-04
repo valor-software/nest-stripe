@@ -25,7 +25,9 @@ import {
   CreatePaymentIntentDto,
   PaymentIntentResponse,
   UpdateSubscriptionDto,
-  ProductDto
+  ProductDto,
+  SubscriptionDto,
+  InvoiceDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -165,6 +167,13 @@ export class StripeController {
     return this.stripeService.createSubscription(dto);
   }
 
+  @ApiResponse({ type: BaseDataResponse<SubscriptionDto> })
+  @ApiTags('Stripe: Subscription')
+  @Get('/subscription/:subscriptionId')
+  getSubscriptionById(@Param('subscriptionId') subscriptionId: string): Promise<BaseDataResponse<SubscriptionDto>> {
+    return this.stripeService.getSubscriptionById(subscriptionId);
+  }
+
   @ApiResponse({ type: SubscriptionResponse })
   @ApiTags('Stripe: Subscription')
   @Post('/subscription/:subscriptionId/update')
@@ -193,6 +202,13 @@ export class StripeController {
     return this.stripeService.listSubscriptionItems(subscriptionId);
   }
   //#endregion
+
+  @ApiResponse({ type: BaseDataResponse<InvoiceDto> })
+  @ApiTags('Stripe: Invoice')
+  @Get('/invoice/:invoiceId')
+  getInvoiceById(@Param('invoiceId') invoiceId: string): Promise<BaseDataResponse<InvoiceDto>> {
+    return this.stripeService.getInvoiceById(invoiceId);
+  }
 
   //#region Usage Record
   @ApiResponse({ type: CreateUsageRecordResponse })

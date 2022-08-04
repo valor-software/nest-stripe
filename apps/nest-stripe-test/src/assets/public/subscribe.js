@@ -133,6 +133,8 @@ function showCardError(text) {
 }
 
 const style = {
+  showIcon: true,
+  iconStyle: 'solid',
   style: {
     base: {
       iconColor: appearance.variables.colorIcon,

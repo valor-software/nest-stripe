@@ -1,13 +1,15 @@
-import { BadRequestException, Controller, Logger, Post, RawBodyRequest, Req } from '@nestjs/common';
+import { BadRequestException, Controller, Logger, Post, RawBodyRequest, Req, UseFilters } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import Stripe from 'stripe';
 import { StripeService } from '../stripe.service';
+import { WebhookExceptionFilter } from './webhook.exception.filter';
 import { WebhookResponse } from './webhook.interfaces';
 import { WebhookService } from './webhook.service';
 
 @ApiTags('Stripe: Webhooks')
 @Controller('stripe/webhooks')
+@UseFilters(new WebhookExceptionFilter())
 export class WebhookController {
   constructor(
     private readonly webhookService: WebhookService,
@@ -19,7 +21,7 @@ export class WebhookController {
   async all(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
       const evt = await this.getEvent(req);
-      this.webhookService.notifyPaymentIntentCreated(evt);
+      this.webhookService.notifyAll(evt);
       return { success: true }
     } catch (error) {
       this.handleError(error);

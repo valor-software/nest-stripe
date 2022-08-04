@@ -48,6 +48,23 @@ export class WebhookService {
     return this._chargeFailed$.asObservable();
   }
 
+  get invoicePaymentSucceeded$(): Observable<Stripe.Event> {
+    return this._invoicePaymentSucceeded$.asObservable();
+  }
+  get invoicePaymentFailed$(): Observable<Stripe.Event> {
+    return this._invoicePaymentFailed$.asObservable();
+  }
+  get invoicePaymentFinalized$(): Observable<Stripe.Event> {
+    return this._invoicePaymentFinalized$.asObservable();
+  }
+
+  get customerSubscriptionDeleted$(): Observable<Stripe.Event> {
+    return this._customerSubscriptionDeleted$.asObservable();
+  }
+  get customerSubscriptionTrialWillEnd$(): Observable<Stripe.Event> {
+    return this._customerSubscriptionTrialWillEnd$.asObservable();
+  }
+
   notifyAll(evt: Stripe.Event): void {
     this._all$.next(evt);
   }

@@ -573,6 +573,20 @@ export class StripeService {
     }
   }
 
+  async getSubscriptionById(subscriptionId: string): Promise<BaseDataResponse<SubscriptionDto>> {
+    try {
+      const subscription = await this.stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['default_payment_method'],
+      });
+      return {
+        success: true,
+        data: this.subscriptionToDto(subscription)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Customer Subscription list');
+    }
+  }
+
   async cancelSubscription(dto: CancelSubscriptionDto): Promise<SubscriptionResponse> {
     try {
       const subscription = await this.stripe.subscriptions.del(dto.subscriptionId);
@@ -655,9 +669,12 @@ export class StripeService {
     }
   }
 
-  async getInvoiceById(id: string): Promise<InvoiceDto> {
+  async getInvoiceById(id: string): Promise<BaseDataResponse<InvoiceDto>> {
     const invoice = await this.stripe.invoices.retrieve(id);
-    return this.invoiceToDto(invoice);
+    return {
+      success:  true,
+      data: this.invoiceToDto(invoice)
+    };
   }
 
   async createQuote(dto: SaveQuoteDto): Promise<SaveQuoteResponse> {
