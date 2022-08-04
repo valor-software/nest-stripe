@@ -15,24 +15,31 @@
 </head>
 
 <body>
-  <div class="form-wrap proceed-to-payment">
-    <button id="button-proceed" onclick="initialize()">
-      <span>Proceed to payment</span>
-    </button>
-    <div class="payment-message" class="hidden"></div>
-  </div>
-  <div class="hidden form-wrap payment-form">
-    <!-- Display a payment form -->
-    <form id="payment-form">
-      <div id="payment-element">
-        <!--Stripe.js injects the Payment Element-->
-      </div>
-      <button id="submit">
-        <div class="spinner hidden" id="spinner"></div>
-        <span id="button-text">Pay now</span>
+  <div class="col">
+    <div class="form-wrap proceed-to-payment">
+      <button id="button-proceed" onclick="initialize()">
+        <span>Proceed to payment</span>
       </button>
-      <div class="payment-message" class="hidden"></div>
-    </form>
+    </div>
+    <div class="hidden form-wrap payment-form">
+      <div class="row">
+        <div class="input-field col s12">
+          <select id="product-list"></select>
+          <label>Select Product</label>
+        </div>
+      </div>
+      <!-- Display a payment form -->
+      <form id="payment-form">
+        <div id="payment-element">
+          <!--Stripe.js injects the Payment Element-->
+        </div>
+        <button id="submit">
+          <div class="spinner hidden" id="spinner"></div>
+          <span id="button-text">Pay now</span>
+        </button>
+      </form>
+    </div>
+    <div id="payment-message" class="hidden red accent-1"></div>
   </div>
 </body>
 

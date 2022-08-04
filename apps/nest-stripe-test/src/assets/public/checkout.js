@@ -1,15 +1,43 @@
-let stripe = window['stripe'];
-// The items the customer wants to buy
-//const items = [{ id: "xl-tshirt", price: 700, displayName: 'XL T-Shirt', quantity: 1 }];
-const items = [
-  { productId: "prod_MAHvyI0ygKWrcH", quantity: 1, price: 899 },
-];
-//const items = [{ priceId: "price_1LPmBKDqFfDeJ7rtNWuUVbC6", quantity: 1, price: 85 }];
+let M = window['M'];
+let stripe = null;
+let productList = [];
+const customerId = localStorage.getItem('customerId');
+const productListEl = document.querySelector('#product-list');
+
+document.addEventListener('DOMContentLoaded', function() {
+  var elems = document.querySelectorAll('select');
+  M.FormSelect.init(elems);
+  setTimeout(() => {
+    stripe = window['stripe'];
+    checkStatus();
+  }, 200);
+});
 
 let elements;
 
-//initialize();
-checkStatus();
+
+async function loadProductList() {
+  const res  = await fetch(`api/stripe/product`);
+  const productListResponse = await res.json();
+  if (productListResponse.success) {
+    productList = productListResponse.data;
+    productListEl.innerHTML='';
+    productList.forEach(p => {
+      const el = document.createElement('option');
+      el.textContent = p.name;
+      el.value = p.id;
+      productListEl.appendChild(el);
+    });
+    M.FormSelect.init(productListEl);
+  } else {
+    console.error(productListResponse);
+    showMessage(productListResponse.errorMessage);
+  }
+}
+
+(function() {
+  loadProductList();
+})();
 
 // Fetches a payment intent and captures the client secret
 async function initialize() {
@@ -18,13 +46,26 @@ async function initialize() {
   document
     .querySelector("#payment-form")
     .addEventListener("submit", handleSubmit);
+  
+  const product = productList.find(p => p.id === productListEl.value);
+
+  const items = [{
+    productId: product.id,
+    quantity: 1,
+    price: product.prices.reduce((a,b) => a += b.unitAmount, 0),
+    metadata: {
+      productId: product.id,
+      extId: 'xxx',
+      name: product.name
+    }
+  }];
 
   const response = await fetch("/api/stripe/payment-intent/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items, mode: 'subscription' }),
+    body: JSON.stringify({ items, metadata: { customerId, productId: product.id } }),
   });
-  const { sessionId, clientSecret, success, errorMessage } = await response.json();
+  const { clientSecret, success, errorMessage } = await response.json();
   if (!success) {
     console.error(errorMessage);
     return;
@@ -141,19 +182,15 @@ async function checkStatus() {
 // ------- UI helpers -------
 
 function showMessage(messageText) {
-  const messageContainer = document.querySelectorAll(".payment-message");
+  const messageContainer = document.querySelector("#payment-message");
 
-  messageContainer.forEach(el => {
-    el.classList.remove("hidden");
-    el.textContent = messageText;
-  });
+  messageContainer.classList.remove("hidden");
+  messageContainer.textContent = messageText;
 
   setTimeout(function () {
-    messageContainer.forEach(el => {
-      el.classList.add("hidden");
-      el.textContent = "";
-    });
-  }, 4000);
+    messageContainer.classList.add("hidden");
+    messageContainer.textContent = "";
+  }, 8000);
 }
 
 // Show a spinner on payment submission

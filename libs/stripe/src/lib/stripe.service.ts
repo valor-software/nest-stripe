@@ -64,6 +64,7 @@ export class StripeService {
         customer: dto.customer,
         description: dto.description,
         payment_method_types: this.config.paymentMethods,
+        metadata: dto.metadata
       })
       return {
         success: true,
@@ -74,9 +75,12 @@ export class StripeService {
     }
   }
 
-  async getPaymentIntentById(id: string): Promise<PaymentIntentDto> {
+  async getPaymentIntentById(id: string): Promise<BaseDataResponse<PaymentIntentDto>> {
     const pi = await this.stripe.paymentIntents.retrieve(id);
-    return this.paymentIntentToDto(pi);
+    return {
+      success: true,
+      data: this.paymentIntentToDto(pi)
+    };
   }
 
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {

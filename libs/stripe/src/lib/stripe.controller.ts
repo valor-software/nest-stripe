@@ -27,7 +27,8 @@ import {
   UpdateSubscriptionDto,
   ProductDto,
   SubscriptionDto,
-  InvoiceDto
+  InvoiceDto,
+  PaymentIntentDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -40,6 +41,7 @@ import { StripeService } from './stripe.service';
 export class StripeController {
   constructor(private stripeService: StripeService) {}
 
+  //#region Payment Intent
   @ApiResponse({ type: PaymentIntentResponse })
   @ApiTags('Stripe: Payment Intent')
   @Post('/payment-intent/create')
@@ -47,12 +49,22 @@ export class StripeController {
     return this.stripeService.createPaymentIntent(dto);
   }
 
+  @ApiResponse({ type: BaseDataResponse })
+  @ApiTags('Stripe: Payment Intent')
+  @Get('/payment-intent/:paymentIntentId')
+  getPaymentIntentById(@Param('paymentIntentId') paymentIntentId: string): Promise<BaseDataResponse<PaymentIntentDto>> {
+    return this.stripeService.getPaymentIntentById(paymentIntentId);
+  }
+  //#endregion
+
+  //#region Checkout session
   @ApiResponse({ type: CheckoutSessionResponse })
   @ApiTags('Stripe: Checkout Session')
   @Post('/checkout-session/create')
   createCheckoutSession(@Body() dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
     return this.stripeService.createCheckoutSession(dto);
   }
+  //#endregion
 
   //#region Customer
   @ApiResponse({ type: CustomerResponse })
@@ -124,6 +136,7 @@ export class StripeController {
   }
   //#endregion
 
+  //#region Payement Method
   @ApiResponse({ type: CreatePaymentMethodResponse })
   @ApiTags('Stripe: Payment Method')
   @Post('/payment-method/create')
@@ -137,7 +150,9 @@ export class StripeController {
   detachPaymentMethod(@Param('paymentMethodId') paymentMethodId: string): Promise<CustomerResponse> {
     return this.stripeService.detachPaymentMethod(paymentMethodId);
   }
+  //#endregion
 
+  //#region Price and Prtoduct
   @ApiResponse({ type: PriceResponse })
   @ApiTags('Stripe: Price')
   @Post('/price/create')
@@ -158,6 +173,7 @@ export class StripeController {
   productList(): Promise<BaseDataResponse<ProductDto[]>> {
     return this.stripeService.getProductList();
   }
+  //#endregion
 
   //#region Subscription
   @ApiResponse({ type: SubscriptionResponse })
@@ -203,12 +219,14 @@ export class StripeController {
   }
   //#endregion
 
+  //#region Invoice
   @ApiResponse({ type: BaseDataResponse<InvoiceDto> })
   @ApiTags('Stripe: Invoice')
   @Get('/invoice/:invoiceId')
   getInvoiceById(@Param('invoiceId') invoiceId: string): Promise<BaseDataResponse<InvoiceDto>> {
     return this.stripeService.getInvoiceById(invoiceId);
   }
+  //#endregion
 
   //#region Usage Record
   @ApiResponse({ type: CreateUsageRecordResponse })
