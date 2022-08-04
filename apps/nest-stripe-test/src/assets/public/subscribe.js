@@ -3,12 +3,15 @@ let paymentMethodId = null;
 let stripe = null;
 let productList = [];
 const customerId = localStorage.getItem('customerId');
+const customer = JSON.parse(localStorage.getItem('customer'));
 const productListEl = document.querySelector('#product-list');
 const paymentMethodsEl = document.querySelector('#payment-method-list');
+const cardHolderNameEl = document.querySelector('#card-holder-name');
 
 document.addEventListener('DOMContentLoaded', function() {
   var elems = document.querySelectorAll('select');
   M.FormSelect.init(elems);
+  M.updateTextFields();
 });
 const form = document.getElementById('payment-form');
 
@@ -42,7 +45,7 @@ async function loadPaymentMethodList() {
     paymentMethodsEl.appendChild(pmEl);
     paymentMethods.forEach(pm => {
       const el = document.createElement('option');
-      el.textContent = `**** **** **** ${pm.card.last4} ${pm.card.exp_month} / ${pm.card.exp_year}`;
+      el.textContent = `${pm.billing_details.name || ''} **** ${pm.card.last4} ${pm.card.exp_month} / ${pm.card.exp_year}`;
       el.value = pm.id;
       paymentMethodsEl.appendChild(el);
     });
@@ -206,15 +209,13 @@ function displayError(event) {
 }
 
 function createPaymentMethod() {
-  // Set up payment method for recurring usage
-  let billingName = 'OLEKSANDR PAVLOVSKYI';
 
   stripe
     .createPaymentMethod({
       type: 'card',
       card: cardNumber,
       billing_details: {
-        name: billingName,
+        name: cardHolderNameEl.value,
       },
     })
     .then((result) => {
