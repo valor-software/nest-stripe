@@ -81,7 +81,7 @@ let paymentMethods = [];
 })();
 
 const appearance = {
-  theme: 'stripe',
+  theme: 'night',
 
   variables: {
     colorPrimary: '#A873FF',
@@ -133,8 +133,6 @@ function showCardError(text) {
 }
 
 const style = {
-  showIcon: true,
-  iconStyle: 'solid',
   style: {
     base: {
       iconColor: appearance.variables.colorIcon,
@@ -158,25 +156,41 @@ const style = {
 }
 
 let card = null;
+let cardNumber = null;
+let cardExpiry = null;
+let cardCvc = null;
 function initializeCardElement() {
   stripe = window['stripe'];
-  let elements = stripe.elements({ appearance });
-  card = elements.create('card', style);
-  card.mount('#card-element');
-
-  card.on('change', function (event) {
+  let elements = stripe.elements();
+  // Card Number
+  cardNumber = elements.create('cardNumber', { ...style, showIcon: true, iconStyle: 'solid', });
+  cardNumber.mount('#card-number-element');
+  cardNumber.on('change', function (event) {
     displayError(event);
   });
-
-  window['cardRef'] = card;
+  window['cardNumberRef'] = cardNumber;
+  // Card Expiry
+  cardExpiry = elements.create('cardExpiry', style);
+  cardExpiry.mount('#card-expiry-element');
+  cardExpiry.on('change', function (event) {
+    displayError(event);
+  });
+  window['cardExpiryRef'] = cardExpiry;
+  // Card CVC
+  cardCvc = elements.create('cardCvc', style);
+  cardCvc.mount('#card-cvc-element');
+  cardCvc.on('change', function (event) {
+    displayError(event);
+  });
+  window['cardCvcRef'] = cardCvc;
 }
 
 function showCardElement() {
-  const cardEl = document.querySelector('#card-element');
+  const cardEl = document.querySelector('#card-element-wrap');
   cardEl.classList.remove('hidden');
 }
 function hideCardElement() {
-  const cardEl = document.querySelector('#card-element');
+  const cardEl = document.querySelector('#card-element-wrap');
   cardEl.classList.add('hidden');
 }
 
@@ -198,7 +212,7 @@ function createPaymentMethod() {
   stripe
     .createPaymentMethod({
       type: 'card',
-      card: card,
+      card: cardNumber,
       billing_details: {
         name: billingName,
       },
