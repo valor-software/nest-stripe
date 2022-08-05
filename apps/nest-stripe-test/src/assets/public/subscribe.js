@@ -45,7 +45,7 @@ async function loadPaymentMethodList() {
     paymentMethodsEl.appendChild(pmEl);
     paymentMethods.forEach(pm => {
       const el = document.createElement('option');
-      el.textContent = `${pm.billing_details.name || ''} **** ${pm.card.last4} ${pm.card.exp_month} / ${pm.card.exp_year}`;
+      el.textContent = `${pm.billingDetails.name || ''} **** ${pm.card.last4} ${pm.card.expMonth} / ${pm.card.expYear}`;
       el.value = pm.id;
       paymentMethodsEl.appendChild(el);
     });

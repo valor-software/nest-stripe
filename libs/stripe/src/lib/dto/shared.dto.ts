@@ -178,3 +178,14 @@ export class RecurringDto {
   })
   usageType?: Stripe.Price.Recurring.UsageType;
 }
+
+export class DobDto {
+  @ApiProperty()
+  day: number | null;
+  
+  @ApiProperty()
+  month: number | null;
+  
+  @ApiProperty()
+  year: number | null;
+}

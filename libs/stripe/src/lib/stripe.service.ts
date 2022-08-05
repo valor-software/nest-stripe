@@ -40,6 +40,7 @@ import {
   PaymentIntentDto,
   UpdateSubscriptionDto,
   CustomerDto,
+  PaymentMethodDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -297,12 +298,15 @@ export class StripeService {
     }
   }
 
-  async customerPaymentMethodList(customerId: string, type: Stripe.PaymentMethodListParams.Type): Promise<BaseDataResponse<Stripe.PaymentMethod[]>> {
+  async customerPaymentMethodList(customerId: string, type: Stripe.PaymentMethodListParams.Type): Promise<BaseDataResponse<PaymentMethodDto[]>> {
     try {
       const paymentMethods = await this.stripe.customers.listPaymentMethods(customerId, {
         type
       });
-      return { success: true, data: paymentMethods.data }
+      return {
+        success: true,
+        data: paymentMethods.data.map(pm => this.paymentMethodToDto(pm))
+      }
     } catch (exception) {
       return this.handleError(exception, 'Attach Payment Method');
     }
@@ -1271,5 +1275,126 @@ export class StripeService {
       statementDescriptorSuffix: pi.statement_descriptor_suffix,
       status: pi.status,
     };
+  }
+
+  private paymentMethodToDto(pm: Stripe.PaymentMethod): PaymentMethodDto {
+    return {
+      id: pm.id,
+      object: pm.object,
+      acssDebit: pm.acss_debit ? {
+        bankName: pm.acss_debit.bank_name,
+        fingerprint: pm.acss_debit.fingerprint,
+        institutionNumber: pm.acss_debit.institution_number,
+        last4: pm.acss_debit.last4,
+        transitNumber: pm.acss_debit.transit_number
+      } : null,
+      affirm: pm.affirm,
+      afterPayClearPay: pm.afterpay_clearpay,
+      aliPay: pm.alipay,
+      auBecsDebit: pm.au_becs_debit ? {
+        bsbNumber: pm.au_becs_debit.bsb_number,
+        fingerprint: pm.au_becs_debit.fingerprint,
+        last4: pm.au_becs_debit.last4
+      } : null,
+      bacsDebit: pm.bacs_debit ? {
+        fingerprint: pm.bacs_debit.fingerprint,
+        last4: pm.bacs_debit.last4,
+        sortCode: pm.bacs_debit.sort_code
+      } : null,
+      banContact: pm.bancontact,
+      billingDetails: pm.billing_details ? {
+        address: this.addressToDto(pm.billing_details.address),
+        email: pm.billing_details.email,
+        name: pm.billing_details.name,
+        phone: pm.billing_details.phone,
+      } : null,
+      boleTo: pm.boleto ? { taxId: pm.boleto.tax_id } : null,
+      card: pm.card ? {
+        brand: pm.card.brand,
+        checks: pm.card.checks ? {
+          addressLine1Check: pm.card.checks.address_line1_check,
+          addressPostalCodeCheck: pm.card.checks.address_postal_code_check,
+          cvcCheck: pm.card.checks.cvc_check
+        } : null,
+        country: pm.card.country,
+        description: pm.card.description,
+        expMonth: pm.card.exp_month,
+        expYear: pm.card.exp_year,
+        fingerprint: pm.card.fingerprint,
+        funding: pm.card.funding,
+        last4: pm.card.last4,
+        networks: pm.card.networks,
+        threeDSecureUsageSupported: pm.card.three_d_secure_usage? pm.card.three_d_secure_usage.supported : null,
+        wallet: pm.card.wallet ? {
+          amexExpressCheckout: pm.card.wallet.amex_express_checkout,
+          applePay: pm.card.wallet.apple_pay,
+          dynamicLast4: pm.card.wallet.dynamic_last4,
+          googlePay: pm.card.wallet.google_pay,
+          masterPass: pm.card.wallet.masterpass ? {
+            billingAddress: this.addressToDto(pm.card.wallet.masterpass.billing_address),
+            email: pm.card.wallet.masterpass.email,
+            name: pm.card.wallet.masterpass.name,
+            shippingAddress: this.addressToDto(pm.card.wallet.masterpass.shipping_address)
+          } : null,
+          samsungPay: pm.card.wallet.samsung_pay,
+          type: pm.card.wallet.type,
+          visaCheckout: pm.card.wallet.visa_checkout ? {
+            billingAddress: this.addressToDto(pm.card.wallet.visa_checkout.billing_address),
+            email: pm.card.wallet.visa_checkout.email,
+            name: pm.card.wallet.visa_checkout.name,
+            shippingAddress: this.addressToDto(pm.card.wallet.visa_checkout.shipping_address)
+          } : null
+        } : null
+      } : null,
+      cardPresent: pm.card_present,
+      created: pm.created,
+      customer: pm.customer as string | null,
+      epsBank: pm.eps?.bank,
+      fpx: pm.fpx ? {
+        accountHolderType: pm.fpx.account_holder_type,
+        bank: pm.fpx.bank
+      } : null,
+      giroPay: pm.giropay,
+      grabPay: pm.grabpay,
+      ideal: pm.ideal,
+      interacPresent: pm.interac_present,
+      klarnaDob: pm.klarna?.dob,
+      konbini: pm.konbini,
+      link: pm.link ? {
+        email: pm.link.email,
+        persistentToken: pm.link.persistent_token
+      } : null,
+      liveMode: pm.livemode,
+      metadata: pm.metadata,
+      oxxo: pm.oxxo,
+      p24Bank: pm.p24?.bank,
+      payNow: pm.paynow,
+      promptPay: pm.promptpay,
+      radarSession: pm.radar_options?.session,
+      sepaDebit: pm.sepa_debit ? {
+        bankCode: pm.sepa_debit.bank_code,
+        branchCode: pm.sepa_debit.branch_code,
+        country: pm.sepa_debit.country,
+        fingerprint: pm.sepa_debit.fingerprint,
+        generatedFrom: pm.sepa_debit.generated_from ? {
+          charge: pm.sepa_debit.generated_from.charge as string,
+          setupAttempt: pm.sepa_debit.generated_from.setup_attempt as string
+        } : null,
+        last4: pm.sepa_debit.last4
+      } : null,
+      sofortCountry: pm.sofort?.country,
+      type: pm.type,
+      usBankAccount: pm.us_bank_account ? {
+        accountHolderType: pm.us_bank_account.account_holder_type,
+        accountType: pm.us_bank_account.account_type,
+        bankName: pm.us_bank_account.bank_name,
+        financialConnectionsAccount: pm.us_bank_account.financial_connections_account,
+        fingerprint: pm.us_bank_account.fingerprint,
+        last4: pm.us_bank_account.last4,
+        networks: pm.us_bank_account.networks,
+        routingNumber: pm.us_bank_account.routing_number
+      } : null,
+      wechatPay: pm.wechat_pay
+    }
   }
 }
