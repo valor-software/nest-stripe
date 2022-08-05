@@ -150,3 +150,22 @@ button:disabled {
     min-width: initial;
   }
 }
+
+#card-element-wrap, #payment-form {
+  background-color: #262D47;
+  padding: 8px;
+}
+
+.element-wrap {
+  background-color: #465380;
+  border-radius: 8px;
+  color: #7B84A3;
+}
+
+.StripeElement {
+  padding: 8px 0;
+}
+.input-field input,
+.input-field select {
+  color: #7B84A3;
+}

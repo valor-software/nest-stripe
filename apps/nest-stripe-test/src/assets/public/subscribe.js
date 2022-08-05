@@ -87,79 +87,30 @@ let paymentMethods = [];
   loadProductList();
 })();
 
-const appearance = {
-  theme: 'night',
-
-  variables: {
-    colorPrimary: '#A873FF',
-    colorBackground: '#2F3858',
-    colorText: '#CAD1EA',
-    colorDanger: '#FF7B7B',
-    fontFamily: 'Lato\', \'Open Sans\', system-ui, sans-serif',
-    spacingUnit: '2px',
-    borderRadius: '8px',
-    fontSizeBase: '16px',
-    colorSuccess: '#54C752',
-    colorWarning: '#F8BF8A',
-    colorIcon: '#7B84A3',
-    colorIconHover: '#C19FF9',		
-  },
-  rules: {
-  '.Tab': {
-      border: '2px solid #465380',
-    },
-    '.Tab:focus': {
-      border: '4px solid rgba(145, 58, 232, 0.44)',  
-    },
-    '.Input': {
-      color: '#CAD1EA',
-    },
-    '.Input::placeholder': {
-      color: '#7B84A3',
-    },
-    '.Label': {
-      color: '#CAD1EA',
-      fontSize: '14px',
-      fontWeight: '700',
-    },
-    '.Block': {
-      colorBackground: '#262D47',
-      borderRadius: '16px'
-    },
-    '.BlockDivider': {
-      backgroundColor: '#465380',
-    },
-    '.BlockAction	': {
-      color: '#A873FF',
-    },
-  },
-};
-
 function showCardError(text) {
   document.querySelector('#error-text').textContent = text;
 }
 
 const style = {
-  style: {
-    base: {
-      iconColor: appearance.variables.colorIcon,
-      color: appearance.variables.colorPrimary,
-      fontWeight: appearance.variables.colorDanger.fontWeight,
-      fontFamily: appearance.variables.colorDanger.fontFamily,
-      fontSize: appearance.variables.colorDanger.fontSize,
-      fontSmoothing: 'antialiased',
-      ':-webkit-autofill': {
-        color: '#fce883',
-      },
-      '::placeholder': {
-        color: '#87BBFD',
-      },
+  base: {
+    iconColor: '#7B84A3',
+    backgroundColor: '#465380',
+    color: '#7B84A3',
+    fontWeight: 'normal',
+    fontFamily: 'Lato',
+    fontSize: '16px',
+    fontSmoothing: 'antialiased',
+    ':-webkit-autofill': {
+      color: '#fce883',
     },
-    invalid: {
-      iconColor: appearance.variables.colorDanger,
-      color: appearance.variables.colorDanger,
+    '::placeholder': {
+      color: '#87BBFD',
     },
-  }
+  },
+  invalid: {
+    iconColor: '#FF7B7B',
+    color: '#FF7B7B',
+  },
 }
 
 let card = null;
@@ -170,21 +121,26 @@ function initializeCardElement() {
   stripe = window['stripe'];
   let elements = stripe.elements();
   // Card Number
-  cardNumber = elements.create('cardNumber', { ...style, showIcon: true, iconStyle: 'solid', });
+  cardNumber = elements.create('cardNumber', {
+    style,
+    showIcon: true,
+    iconStyle: 'solid',
+    placeholder: '7777 7777 7777 7777'
+  });
   cardNumber.mount('#card-number-element');
   cardNumber.on('change', function (event) {
     displayError(event);
   });
   window['cardNumberRef'] = cardNumber;
   // Card Expiry
-  cardExpiry = elements.create('cardExpiry', style);
+  cardExpiry = elements.create('cardExpiry', {style});
   cardExpiry.mount('#card-expiry-element');
   cardExpiry.on('change', function (event) {
     displayError(event);
   });
   window['cardExpiryRef'] = cardExpiry;
   // Card CVC
-  cardCvc = elements.create('cardCvc', style);
+  cardCvc = elements.create('cardCvc', {style});
   cardCvc.mount('#card-cvc-element');
   cardCvc.on('change', function (event) {
     displayError(event);

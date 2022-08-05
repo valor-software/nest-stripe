@@ -35,35 +35,35 @@
       </div>
       <div class="row">
         <div class="input-field col s12">
-          <input placeholder="Card holder name" id="card-holder-name" type="text" class="validate">
+          <input id="card-holder-name" type="text" class="validate">
           <label for="card-holder-name">Card holder name</label>
         </div>
       </div>
-      <div class="col s12" id="card-element-wrap">
-        <div class="row">
+      <div class="s12" id="card-element-wrap">
+        <div class="row" style="display: none;">
           <div id="card-element">
             <!-- Elements will create input elements here -->
           </div>
         </div>
         <div class="row">
-          <div class="input-field col s12">
+          <div class="input-field col s12 element-wrap">
             <div id="card-number-element"></div>
           </div>
         </div>
         <div class="row">
-          <div class="col s6">
+          <div class="col s6 element-wrap">
             <div id="card-expiry-element"></div>
           </div>
-          <div class="col s6">
+          <div class="col s6 element-wrap">
             <div id="card-cvc-element"></div>
           </div>
         </div>
+        <button type="submit">Subscribe</button>
+        <!-- We'll put the error messages in this element -->
+        <div id="card-element-errors" role="alert" class="red accent-1"></div>
+        <div class="red accent-1" id="error-text"></div>
       </div>
   
-      <!-- We'll put the error messages in this element -->
-      <div id="card-element-errors" role="alert"></div>
-      <button type="submit">Subscribe</button>
-      <div class="red accent-1" id="error-text"></div>
     </form>
   </div>
 </body>
