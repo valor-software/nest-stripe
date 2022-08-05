@@ -474,7 +474,7 @@ export class StripeService {
   async updateSubscription(subscriptionId: string, dto: UpdateSubscriptionDto): Promise<SubscriptionResponse> {
     try {
       const subscription = await this.stripe.subscriptions.update(subscriptionId, {
-        items: dto.items.map(i => ({
+        items: dto.items?.map(i => ({
           price: i.priceId,
           plan: i.planId,
           quantity: i.quantity

@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
   var elems = document.querySelectorAll('select');
   M.FormSelect.init(elems);
 });
+localStorage.removeItem('customer');
+localStorage.removeItem('customerId');
 
 async function getCustomerList() {
   const email = document.querySelector('#email').value;

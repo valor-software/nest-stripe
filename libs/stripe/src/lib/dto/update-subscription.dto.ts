@@ -190,10 +190,10 @@ export class SubscriptionUpdatePaymentSettingsDto {
 
 export class UpdateSubscriptionDto {
 
-  @ApiProperty({ required: true, isArray: true, type: SubscriptionUpdateItemDto })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ required: true, isArray: true, type: SubscriptionUpdateItemDto })
+  @IsOptional()
   @IsArray()
-  items: Array<SubscriptionUpdateItemDto>;
+  items?: Array<SubscriptionUpdateItemDto>;
 
   @ApiPropertyOptional()
   @IsOptional()

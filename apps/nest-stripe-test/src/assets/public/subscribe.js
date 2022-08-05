@@ -20,7 +20,11 @@ form.addEventListener('submit', function (ev) {
   if (paymentMethodId) {
     createSubscription({customerId, paymentMethodId })
   } else {
-    createPaymentMethod();
+    if (paymentMethodId) {
+      createSubscription();
+    } else {
+      createPaymentMethod();
+    }
   }
 });
 
@@ -218,6 +222,25 @@ function createPaymentMethod() {
         name: cardHolderNameEl.value,
       },
     })
+    .then(response => {
+      if (response.error) {
+        displayError(response);
+        return response
+      } else {
+        paymentMethodId = response.id;
+        loadPaymentMethodList();
+        return fetch(`/api/stripe/customer/${customerId}/attach-payment-method/${paymentMethodId}`, {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json',
+          },
+          body: null
+        })
+      }
+    })
+    .then((response) => {
+      return response.json();
+    })
     .then((result) => {
       if (result.error) {
         displayError(result);
@@ -231,71 +254,60 @@ function createPaymentMethod() {
     });
 }
 
-function createSubscription({ customerId, paymentMethodId }) {
+function createSubscription(response) {
   const product = productList.find(p => p.id = productListEl.value);
   const items = product.prices.map(p => ({ priceId: p.id }));
-  return fetch(`/api/stripe/customer/${customerId}/attach-payment-method/${paymentMethodId}`, {
-      method: 'post',
-      headers: {
-        'Content-type': 'application/json',
-      },
-      body: null
+  if (!response.success) {
+    throw new Error(response.errorMessage)
+  }
+  return fetch('/api/stripe/subscription/create', {
+    method: 'post',
+    headers: {
+      'Content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      customerId: customerId,
+      items,
+      defaultPaymentMethod: paymentMethodId
     })
-    .then((response) => {
-      return response.json();
-    })
-    .then(response => {
-      if (!response.success) {
-        throw new Error(response.errorMessage)
-      }
-      return fetch('/api/stripe/subscription/create', {
-        method: 'post',
-        headers: {
-          'Content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerId: customerId,
-          items,
-        })
-      })
-    })
-    .then((response) => {
-      return response.json();
-    })
-    // If the card is declined, display an error to the user.
-    .then((result) => {
-      if (!result.success) {
-        // The card had an error when trying to attach it to a customer.
-        throw new Error(result.errorMessage);
-      }
-      return result;
-    })
-    // Normalize the result to contain the object returned by Stripe.
-    // Add the additional details we need.
-    .then((result) => {
-      return {
-        result,
-        isRetry: false
-      };
-    })
-    // Some payment methods require a customer to be on session
-    // to complete the payment process. Check the status of the
-    // payment intent to handle these actions.
-    .then(handlePaymentThatRequiresCustomerAction)
+  })
+  .then((response) => {
+    return response.json();
+  })
+  // If the card is declined, display an error to the user.
+  .then((result) => {
+    if (!result.success) {
+      // The card had an error when trying to attach it to a customer.
+      throw new Error(result.errorMessage);
+    }
+    return result;
+  })
+  // Normalize the result to contain the object returned by Stripe.
+  // Add the additional details we need.
+  .then((result) => {
+    return {
+      result,
+      isRetry: false
+    };
+  })
+  // Some payment methods require a customer to be on session
+  // to complete the payment process. Check the status of the
+  // payment intent to handle these actions.
+  .then(handlePaymentThatRequiresCustomerAction)
 
-    // If attaching this card to a Customer object succeeds,
-    // but attempts to charge the customer fail, you
-    // get a requires_payment_method error.
-    .then(handleRequiresPaymentMethod)
+  // If attaching this card to a Customer object succeeds,
+  // but attempts to charge the customer fail, you
+  // get a requires_payment_method error.
+  .then(handleRequiresPaymentMethod)
 
-    // No more actions required. Provision your service for the user.
-    .then(onSubscriptionComplete)
+  // No more actions required. Provision your service for the user.
+  .then(onSubscriptionComplete)
 
-    .catch((error) => {
-      // An error has happened. Display the failure to the user here.
-      // We utilize the HTML element we created.
-      showCardError(error);
-    });
+  .catch((error) => {
+    // An error has happened. Display the failure to the user here.
+    // We utilize the HTML element we created.
+    showCardError(error);
+  });
 }
 
 function onSubscriptionComplete({result}) {

@@ -8,51 +8,62 @@
   <script src="subscribe.js" defer></script>
 </head>
 <body>
-  <form id="payment-form">
-    <div class="row">
-      <div class="input-field col s12">
-        <select id="product-list"></select>
-        <label>Select Product</label>
-      </div>
+  <nav>
+    <div class="nav-wrapper" style="flex: 1 0;">
+      <ul id="nav-mobile" class="left hide-on-med-and-down">
+        <li><a href="subscribe.html">Subscribe test</a></li>
+        <li><a href="checkout.html">Checkout test</a></li>
+        <li><a href="sign-in.html">Sign-out</a></li>
+      </ul>
     </div>
-    <div class="row">
-      <div class="input-field col s12">
-        <select id="payment-method-list">
-          <option value="">Create new</option>
-        </select>
-        <label>Select Payment Method</label>
-      </div>
-    </div>
-    <div class="row">
-      <div class="input-field col s12">
-        <input placeholder="Card holder name" id="card-holder-name" type="text" class="validate">
-        <label for="card-holder-name">Card holder name</label>
-      </div>
-    </div>
-    <div class="col s12" id="card-element-wrap">
+  </nav>
+  <div style="height: 100%; display: flex; justify-content: center; justify-items: center;">
+    <form id="payment-form">
       <div class="row">
-        <div id="card-element">
-          <!-- Elements will create input elements here -->
+        <div class="input-field col s12">
+          <select id="product-list"></select>
+          <label>Select Product</label>
         </div>
       </div>
       <div class="row">
         <div class="input-field col s12">
-          <div id="card-number-element"></div>
+          <select id="payment-method-list">
+            <option value="">Create new</option>
+          </select>
+          <label>Select Payment Method</label>
         </div>
       </div>
       <div class="row">
-        <div class="col s6">
-          <div id="card-expiry-element"></div>
-        </div>
-        <div class="col s6">
-          <div id="card-cvc-element"></div>
+        <div class="input-field col s12">
+          <input placeholder="Card holder name" id="card-holder-name" type="text" class="validate">
+          <label for="card-holder-name">Card holder name</label>
         </div>
       </div>
-    </div>
-
-    <!-- We'll put the error messages in this element -->
-    <div id="card-element-errors" role="alert"></div>
-    <button type="submit">Subscribe</button>
-    <div class="red accent-1" id="error-text"></div>
-  </form>
+      <div class="col s12" id="card-element-wrap">
+        <div class="row">
+          <div id="card-element">
+            <!-- Elements will create input elements here -->
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s12">
+            <div id="card-number-element"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col s6">
+            <div id="card-expiry-element"></div>
+          </div>
+          <div class="col s6">
+            <div id="card-cvc-element"></div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- We'll put the error messages in this element -->
+      <div id="card-element-errors" role="alert"></div>
+      <button type="submit">Subscribe</button>
+      <div class="red accent-1" id="error-text"></div>
+    </form>
+  </div>
 </body>
