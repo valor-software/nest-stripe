@@ -407,6 +407,7 @@ export class StripeService {
 
   async createSubscription(dto: CreateSubscriptionDto): Promise<SubscriptionResponse> {
     try {
+      this.stripe.events
       const subscription = await this.stripe.subscriptions.create({
         customer: dto.customerId,
         items: dto.items.map(i => ({

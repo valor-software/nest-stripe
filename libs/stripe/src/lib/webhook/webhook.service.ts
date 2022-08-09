@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { filter, Observable, Subject } from 'rxjs';
 import Stripe from 'stripe';
+import { WebhookEventType } from './event-types.enum';
 
 @Injectable()
 export class WebhookService {
@@ -109,7 +110,7 @@ export class WebhookService {
     this._customerSubscriptionTrialWillEnd$.next(evt);
   }
 
-  subscribeToEvent(type: string): Observable<Stripe.Event> {
+  subscribeToEvent(type: WebhookEventType): Observable<Stripe.Event> {
     return this._all$.pipe(filter(evt => evt.type === type));
   }
 }
