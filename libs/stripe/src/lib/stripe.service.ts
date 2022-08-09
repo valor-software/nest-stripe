@@ -498,7 +498,7 @@ export class StripeService {
         default_payment_method: dto.defaultPaymentMethod,
         description: dto.description,
         metadata: dto.metadata,
-        payment_behavior: dto.paymentBehavior || 'default_incomplete',
+        payment_behavior: dto.paymentBehavior,
         days_until_due: dto.daysUntilDue,
         default_source: dto.defaultSource,
         default_tax_rates: dto.defaultTaxRates,
@@ -801,6 +801,16 @@ export class StripeService {
     }
   }
 
+  private getIdOrDtoFieldValue<T, Q>(stripeValue: Q | null | string, convert: (Q) => T): T | null | string {
+    let value: T | null | string = null;
+    if (typeof stripeValue === 'string') {
+      value = stripeValue;
+    } else if (stripeValue != null) {
+      value = convert(stripeValue);
+    }
+    return value;
+  }
+
   private addressToDto(address: Stripe.Address | undefined): AddressDto | undefined {
     if (!address) {
       return address as undefined | null;
@@ -844,12 +854,14 @@ export class StripeService {
   }
 
   private subscriptionToDto(subscription: Stripe.Subscription): SubscriptionDto {
-    let latestInvoice = null;
-    if (typeof subscription.latest_invoice === 'string') {
-      latestInvoice = subscription.latest_invoice;
-    } else {
-      latestInvoice = this.invoiceToDto(subscription.latest_invoice as Stripe.Invoice)
-    }
+    const latestInvoice = this.getIdOrDtoFieldValue(
+      subscription.latest_invoice,
+      v => this.invoiceToDto(v)
+    );
+    const defaultPaymentMethod = this.getIdOrDtoFieldValue(
+      subscription.default_payment_method,
+      v => this.paymentMethodToDto(v)
+    );
     return {
       id: subscription.id,
       created: subscription.created,
@@ -869,7 +881,7 @@ export class StripeService {
       currentPeriodEnd: subscription.current_period_end,
       customer: subscription.customer,
       daysUntilDue: subscription.days_until_due,
-      defaultPaymentMethod: subscription.default_payment_method,
+      defaultPaymentMethod,
       defaultSource: subscription.default_source,
       defaultTaxRates: subscription.default_tax_rates as unknown as TaxRate[],
       description: subscription.description,
@@ -983,18 +995,14 @@ export class StripeService {
   }
 
   private invoiceToDto(invoice: Stripe.Invoice): InvoiceDto {
-    let subscription = null;
-    if (typeof invoice.subscription === 'string') {
-      subscription = invoice.subscription
-    } else if (invoice.subscription) {
-      subscription = this.subscriptionToDto(invoice.subscription);
-    }
-    let quote = null;
-    if (typeof invoice.quote === 'string') {
-      quote = invoice.quote
-    } else if (invoice.quote) {
-      quote = this.quoteToDto(invoice.quote);
-    }
+    const subscription = this.getIdOrDtoFieldValue(
+      invoice.subscription,
+      v => this.subscriptionToDto(v)
+    );
+    const quote = this.getIdOrDtoFieldValue(
+      invoice.quote,
+      v => this.quoteToDto(v)
+    );
     return {
       id: invoice.id,
       accountCountry: invoice.account_country,
@@ -1118,12 +1126,10 @@ export class StripeService {
   }
 
   private priceToDto(price: Stripe.Price): PriceDto {
-    let product = null;
-    if (typeof price.product === 'string') {
-      product = price.product;
-    } else if (price.product) {
-      product = this.productToDto(price.product as Stripe.Product);
-    }
+    const product = this.getIdOrDtoFieldValue(
+      price.product,
+      v => this.productToDto(v)
+    );
     return {
       id: price.id,
       object: price.object,
@@ -1154,12 +1160,10 @@ export class StripeService {
   }
 
   private productToDto(product: Stripe.Product): ProductDto {
-    let defaultPrice = null;
-    if (typeof product.default_price === 'string') {
-      defaultPrice = product.default_price;
-    } else if (product.default_price) {
-      defaultPrice = this.priceToDto(product.default_price as Stripe.Price);
-    }
+    const defaultPrice = this.getIdOrDtoFieldValue(
+      product.default_price,
+      v => this.priceToDto(v)
+    );
     return {
       id: product.id,
       object: product.object,
@@ -1186,12 +1190,10 @@ export class StripeService {
   }
 
   private planToDto(plan: Stripe.Plan): PlanDto {
-    let product = null;
-    if (typeof plan.product === 'string') {
-      product = plan.product;
-    } else {
-      product = this.productToDto(plan.product as Stripe.Product);
-    }
+    const product = this.getIdOrDtoFieldValue(
+      plan.product,
+      v => this.productToDto(v)
+    );
     return {
       id: plan.id,
       object: plan.object,

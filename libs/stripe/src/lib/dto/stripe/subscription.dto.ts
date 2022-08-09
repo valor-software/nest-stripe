@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { BaseDto } from '../base.dto';
 import { InvoiceDto } from './invoice.dto';
+import { PaymentMethodDto } from './payment-method.dto';
 import { SubscriptionItemDto } from './subscription-item.dto';
 
 export type TaxRate = 'gst' | 'hst' | 'jct' | 'pst' | 'qst' | 'rst' | 'sales_tax' | 'vat';
@@ -53,7 +54,7 @@ export class SubscriptionDto extends BaseDto {
   daysUntilDue: number | null;
 
   @ApiProperty()
-  defaultPaymentMethod: string | Stripe.PaymentMethod | null;
+  defaultPaymentMethod: string | PaymentMethodDto;
   
   @ApiProperty()
   defaultSource: string | Stripe.CustomerSource | null;

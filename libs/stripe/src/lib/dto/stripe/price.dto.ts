@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { BaseDto } from '../base.dto';
 import { RecurringDto } from '../shared.dto';
+import { ProductDto } from './product.dto';
 
 export class PriceDto extends BaseDto {
 
@@ -18,7 +19,7 @@ export class PriceDto extends BaseDto {
   nickname: string | null;
 
   @ApiProperty()
-  product: string | Stripe.Product | Stripe.DeletedProduct;
+  product: string | ProductDto;
 
   @ApiProperty()
   recurring: RecurringDto | null;
