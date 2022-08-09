@@ -41,6 +41,7 @@ import {
   UpdateSubscriptionDto,
   CustomerDto,
   PaymentMethodDto,
+  PaymentItemDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -58,6 +59,10 @@ export class StripeService {
 
   async createPaymentIntent(dto: CreatePaymentIntentDto): Promise<PaymentIntentResponse> {
     try {
+      const validateRes = this.validateItems(dto.items);
+      if (!validateRes.success) {
+        return validateRes;
+      }
       const amount = dto.items.reduce((a,b) => a += b.quantity * b.price, 0);
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount,
@@ -86,6 +91,10 @@ export class StripeService {
 
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
     try {
+      const validateRes = this.validateItems(dto.items);
+      if (!validateRes.success) {
+        return validateRes;
+      }
       const metadata = dto.metadata;
       const lineItems = dto.items.map(item => ({
         price: item.priceId,
@@ -799,6 +808,13 @@ export class StripeService {
       success: false,
       errorMessage: `Stripe: ${context} error: ${exception.message}`
     }
+  }
+
+  private validateItems(items: PaymentItemDto[]): BaseResponse {
+    if (this.config.validateItems) {
+      return this.config.validateItems(items)
+    }
+    return { success: true };
   }
 
   private getIdOrDtoFieldValue<T, Q>(stripeValue: Q | null | string, convert: (Q) => T): T | null | string {

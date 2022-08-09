@@ -1,3 +1,5 @@
+import { BaseResponse, PaymentItemDto } from './dto';
+
 export type PaymentMethodType = 
   | 'acss_debit'
   | 'affirm'
@@ -30,7 +32,8 @@ export class StripeConfig {
   successUrl?: string;
   cancelUrl?: string;
   currency?: string;
-  paymentMethods?: Array<PaymentMethodType>
+  paymentMethods?: Array<PaymentMethodType>;
+  validateItems?: (items: PaymentItemDto[]) => BaseResponse
 }
 
 export const STRIPE_CONFIG = 'STRIPE_CONFIG';
