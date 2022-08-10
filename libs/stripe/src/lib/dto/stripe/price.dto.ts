@@ -4,6 +4,23 @@ import { BaseDto } from '../base.dto';
 import { RecurringDto } from '../shared.dto';
 import { ProductDto } from './product.dto';
 
+export class PriceTierDto {
+  @ApiProperty()
+  flatAmount: number | null;
+  
+  @ApiProperty()
+  flatAmountDecimal: string | null;
+  
+  @ApiProperty()
+  unitAmount: number | null;
+  
+  @ApiProperty()
+  unitAmountDecimal: string | null;
+  
+  @ApiProperty()
+  upTo: number | null;
+}
+
 export class PriceDto extends BaseDto {
 
   @ApiProperty({ enum: ['per_unit', 'tiered']})
@@ -27,8 +44,8 @@ export class PriceDto extends BaseDto {
   @ApiProperty({ enum: ['exclusive', 'inclusive', 'unspecified']})
   taxBehavior: 'exclusive' | 'inclusive' | 'unspecified' | null;
 
-  @ApiPropertyOptional({ isArray: true })
-  tiers?: Array<Stripe.Price.Tier>;
+  @ApiPropertyOptional({ isArray: true, type: PriceTierDto })
+  tiers?: Array<PriceTierDto>;
 
   @ApiProperty({ enum: ['graduated', 'volume']})
   tiersMode: 'graduated' | 'volume' | null;

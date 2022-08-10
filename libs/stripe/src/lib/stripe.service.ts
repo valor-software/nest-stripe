@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Stripe } from 'stripe';
 import {
   CreateCheckoutSessionDto,
@@ -305,7 +305,7 @@ export class StripeService {
       const paymentMethod = await this.stripe.paymentMethods.detach(paymentMethodId);
       return { success: true, paymentMethodId: paymentMethod.id }
     } catch (exception) {
-      return this.handleError(exception, 'Attach Payment Method');
+      return this.handleError(exception, 'Detach Payment Method');
     }
   }
 
@@ -319,13 +319,13 @@ export class StripeService {
         data: paymentMethods.data.map(pm => this.paymentMethodToDto(pm))
       }
     } catch (exception) {
-      return this.handleError(exception, 'Attach Payment Method');
+      return this.handleError(exception, 'Customer Payment Method List');
     }
   }
 
   async createPrice(dto: CreatePriceDto): Promise<PriceResponse> {
     try {
-      const price = await this.stripe.prices.create({
+      const payload = {
         currency: dto.currency || this.config.currency || 'usd',
         active: dto.active != undefined ? dto.active : true,
         billing_scheme: dto.billingScheme,
@@ -344,23 +344,24 @@ export class StripeService {
         recurring: dto.recurring ? {
           aggregate_usage: dto.recurring.aggregateUsage,
           interval: dto.recurring.interval,
-          interval_count: dto.recurring.intervalCount,
-          trial_period_days: dto.recurring.trialPeriodDays,
+          interval_count: dto.recurring.intervalCount == null ? undefined : dto.recurring.intervalCount,
+          trial_period_days: dto.recurring.trialPeriodDays == null ? undefined : dto.recurring.trialPeriodDays,
           usage_type: dto.recurring.usageType
-        } : null,
+        } : undefined,
         tax_behavior: dto.taxBehavior,
-        tiers: dto.tier ? dto.tier.map(t => ({
+        tiers: dto.tiers ? dto.tiers.map(t => ({
           flat_amount: t.flatAmount,
           flat_amount_decimal: t.flatAmountDecimal,
           unit_amount: t.unitAmount,
           unit_amount_decimal: t.unitAmountDecimal,
-          up_to: t.upTo
-        })) : null,
+          up_to: t.upTo || 'inf'
+        })) : undefined,
         tiers_mode: dto.tiersMode,
         transfer_lookup_key: dto.transferLookupKey,
-        unit_amount: dto.amount,
+        unit_amount: dto.amount == null ? undefined : dto.amount,
         expand: dto.expand
-      });
+      } as Stripe.PriceCreateParams;
+      const price = await this.stripe.prices.create(payload);
       return {
         success: true,
         priceId: price.id
@@ -371,15 +372,22 @@ export class StripeService {
   }
 
   async getPriceById(id: string): Promise<PriceDto> {
-    const price = await this.stripe.prices.retrieve(id);
+    const price = await this.stripe.prices.retrieve(id, {
+      expand: ['tiers']
+    });
     return this.priceToDto(price);
   }
 
   async getPriceList(productId?: string): Promise<BaseDataResponse<PriceDto[]>> {
     try {
+      const expand = ['data.tiers'];
+      if (!productId) {
+        expand.push('data.product')
+      }
+      console.log(expand)
       const prices = await this.stripe.prices.list({
         product: productId,
-        expand: productId ? undefined : ['data.product']
+        expand
       });
       return {
         success: true,
@@ -806,6 +814,7 @@ export class StripeService {
   }
 
   private handleError(exception: any, context: string): BaseResponse {
+    console.log(exception)
     this.logger.error(`Stripe: ${context} error`, exception, exception.stack);
     return {
       success: false,
@@ -1169,7 +1178,13 @@ export class StripeService {
         usageType: price.recurring.usage_type
       } : null,
       taxBehavior: price.tax_behavior,
-      tiers: price.tiers,
+      tiers: price.tiers ? price.tiers.map(t => ({
+        flatAmount: t.flat_amount,
+        flatAmountDecimal: t.flat_amount_decimal,
+        unitAmount: t.unit_amount,
+        unitAmountDecimal: t.unit_amount_decimal,
+        upTo: t.up_to
+      })) : undefined,
       tiersMode: price.tiers_mode,
       transformQuantity: price.transform_quantity,
       type: price.type,

@@ -388,3 +388,65 @@ function retryInvoiceWithNewPaymentMethod({
       })
   );
 }
+
+async function createPrices() {
+  const prodPrices = JSON.parse(localStorage.getItem('medusa_prices'));
+  const priceIdMap = [];
+  await Promise.all(prodPrices.map(async p => {
+    const prodPriceId = p.id;
+    const dto = {
+      currency: p.currency,
+      active: true,
+      billingScheme: p.billingScheme,
+      lookupKey: p.lookupKey,
+      metadata: p.metadata,
+      nickname: p.nickname || undefined,
+      productData: {
+        active: true,
+        metadata: p.product.metadata,
+        name: p.product.name,
+        statementDescriptor: p.product.statementDescriptor || undefined,
+        taxCode: p.product.taxCode  || undefined,
+        unitLabel: p.product.unitLabel || undefined
+      },
+      recurring: p.recurring  || undefined,
+      taxBehavior: p.taxBehavior  || undefined,
+      tiers: p.tiers ? p.tiers.map(t => ({
+        flatAmount: t.flatAmount == null ? undefined : t.flatAmount,
+        flatAmountDecimal: t.unitAmountDecimal ? undefined : t.flatAmountDecimal,
+        unitAmount: t.unitAmount == null ? undefined : t.unitAmount,
+        unitAmountDecimal: t.flatAmountDecimal ? undefined : t.unitAmountDecimal,
+        upTo: t.upTo
+      })) : undefined,
+      tiersMode: p.tiersMode  || undefined,
+      transferLookupKey: p.transferLookupKey  || undefined,
+      amount: p.unitAmount == null ? null : p.unitAmount
+    }
+    const resp = await (
+      fetch('api/stripe/price/create', {
+        method: 'post',
+        headers: {
+          'Content-type': 'application/json',
+        },
+        body: JSON.stringify(dto)
+      }).then(r => r.json())
+    );
+    if (resp.success) {
+      const { priceId } = resp;
+      priceIdMap[prodPriceId] = priceId;
+    } else {
+      console.error(resp.errorMessage);
+    }
+    localStorage.setItem('medusa_priceIdMap', JSON.stringify(priceIdMap))
+  }))
+}
+
+function createProducts() {
+  const prodProducts = JSON.parse(localStorage.getItem('medusa_products'));
+  const priceIdMap = [];
+  const productIdMap = [];
+  prodProducts.map(p => {
+    const prodId = p.id;
+    const dto = {}
+  })
+}
