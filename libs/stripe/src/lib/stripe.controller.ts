@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import Stripe from 'stripe';
 import {
   BaseDataResponse,
@@ -75,10 +76,19 @@ export class StripeController {
   }
 
   @ApiResponse({ type: CustomerResponse })
+  @ApiQuery({
+    name: 'useAsDefault',
+    type: Boolean,
+    required: false
+  })
   @ApiTags('Stripe: Customer')
   @Post('/customer/:customerId/attach-payment-method/:paymentMethodId')
-  attachPaymentMethod(@Param('customerId') customerId: string, @Param('paymentMethodId') paymentMethodId: string): Promise<CustomerResponse> {
-    return this.stripeService.attachPaymentMethod(paymentMethodId, customerId);
+  attachPaymentMethod(
+    @Param('customerId') customerId: string,
+    @Param('paymentMethodId')  paymentMethodId: string,
+    @Query('useAsDefault') useAsDefault?: string
+  ): Promise<CustomerResponse> {
+    return this.stripeService.attachPaymentMethod(paymentMethodId, customerId, Boolean(useAsDefault));
   }
 
   @ApiResponse({ type: BaseDataResponse })

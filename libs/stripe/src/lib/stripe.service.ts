@@ -282,16 +282,18 @@ export class StripeService {
     }
   }
 
-  async attachPaymentMethod(paymentMethodId: string, customerId: string): Promise<CreatePaymentMethodResponse> {
+  async attachPaymentMethod(paymentMethodId: string, customerId: string, useAsDefault?: boolean): Promise<CreatePaymentMethodResponse> {
     try {
       const paymentMethod = await this.stripe.paymentMethods.attach(paymentMethodId, {
         customer: customerId
       });
-      await this.stripe.customers.update(customerId, {
-        invoice_settings: {
-          default_payment_method: paymentMethodId,
-        },
-      });
+      if (useAsDefault) {
+        await this.stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId,
+          },
+        });
+      }
       return { success: true, paymentMethodId: paymentMethod.id }
     } catch (exception) {
       return this.handleError(exception, 'Attach Payment Method');

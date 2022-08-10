@@ -7,6 +7,7 @@ const customer = JSON.parse(localStorage.getItem('customer'));
 const productListEl = document.querySelector('#product-list');
 const paymentMethodsEl = document.querySelector('#payment-method-list');
 const cardHolderNameEl = document.querySelector('#card-holder-name');
+const useAsDefaultEl = document.querySelector('#use-as-default')
 
 document.addEventListener('DOMContentLoaded', function() {
   var elems = document.querySelectorAll('select');
@@ -18,13 +19,9 @@ const form = document.getElementById('payment-form');
 form.addEventListener('submit', function (ev) {
   ev.preventDefault();
   if (paymentMethodId) {
-    createSubscription({customerId, paymentMethodId })
+    createSubscription();
   } else {
-    if (paymentMethodId) {
-      createSubscription();
-    } else {
-      createPaymentMethod();
-    }
+    createPaymentMethod();
   }
 });
 
@@ -169,7 +166,7 @@ function displayError(event) {
 }
 
 function createPaymentMethod() {
-
+  const useAsDefault = useAsDefaultEl.checked;
   stripe
     .createPaymentMethod({
       type: 'card',
@@ -183,9 +180,9 @@ function createPaymentMethod() {
         displayError(response);
         return response
       } else {
-        paymentMethodId = response.id;
+        paymentMethodId = response.paymentMethod.id;
         loadPaymentMethodList();
-        return fetch(`/api/stripe/customer/${customerId}/attach-payment-method/${paymentMethodId}`, {
+        return fetch(`/api/stripe/customer/${customerId}/attach-payment-method/${paymentMethodId}?useAsDefault=${useAsDefault}`, {
           method: 'post',
           headers: {
             'Content-type': 'application/json',
@@ -228,6 +225,9 @@ function createSubscription(response) {
     })
   })
   .then((response) => {
+    cardHolderNameEl.value = null;
+    useAsDefaultEl.checked = undefined;
+    loadPaymentMethodList();
     return response.json();
   })
   // If the card is declined, display an error to the user.
