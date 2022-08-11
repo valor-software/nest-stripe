@@ -3,7 +3,7 @@ import { IsArray, IsBoolean, IsEnum, IsNumber, IsNumberString, IsOptional, IsStr
 import { ProductData } from './product.data.dto';
 import { CreateRecurringDto } from './shared.dto';
 
-export class CreatePriceTierDto {
+export class UpdatePriceTierDto {
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -29,7 +29,7 @@ export class CreatePriceTierDto {
   upTo: 'inf' | number;
 }
 
-export class CreatePriceDto {
+export class UpdatePriceDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -65,16 +65,6 @@ export class CreatePriceDto {
   nickname?: string;
 
   @ApiPropertyOptional({
-    description: 'The ID of the product that this price will belong to.'
-  })
-  @IsOptional()
-  @IsString()
-  productId?: string;
-
-  @ApiPropertyOptional()
-  productData?: ProductData;
-
-  @ApiPropertyOptional({
     description: 'The recurring components of a price such as `interval` and `usage_type`.'
   })
   recurring?: CreateRecurringDto;
@@ -86,9 +76,6 @@ export class CreatePriceDto {
   @IsOptional()
   @IsEnum(['exclusive', 'inclusive', 'unspecified'])
   taxBehavior?: 'exclusive' | 'inclusive' | 'unspecified';
-
-  @ApiPropertyOptional({ type: CreatePriceTierDto, isArray: true })
-  tiers: CreatePriceTierDto[]
 
   @ApiPropertyOptional({
     description: 'Defines if the tiering price should be `graduated` or `volume` based. In `volume`-based tiering, the maximum quantity within a period determines the per unit price, in `graduated` tiering pricing can successively change as the quantity grows.',
@@ -102,15 +89,5 @@ export class CreatePriceDto {
     description: ' If set to true, will atomically remove the lookup key from the existing price, and assign it to this price.'
   })
   transferLookupKey?: boolean;
-  @ApiProperty()
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  amount?: number
-
-  @ApiPropertyOptional({ type: 'string', isArray: true })
-  @IsOptional()
-  @IsArray()
-  expand?: Array<string>;
 
 }

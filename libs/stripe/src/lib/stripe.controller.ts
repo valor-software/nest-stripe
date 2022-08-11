@@ -29,7 +29,11 @@ import {
   ProductDto,
   SubscriptionDto,
   InvoiceDto,
-  PaymentIntentDto
+  PaymentIntentDto,
+  ProductResponse,
+  CreateProductDto,
+  UpdatePriceDto,
+  UpdateProductDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -162,12 +166,19 @@ export class StripeController {
   }
   //#endregion
 
-  //#region Price and Prtoduct
+  //#region Price
   @ApiResponse({ type: PriceResponse })
   @ApiTags('Stripe: Price')
   @Post('/price/create')
   createPrice(@Body() dto: CreatePriceDto): Promise<PriceResponse> {
     return this.stripeService.createPrice(dto);
+  }
+
+  @ApiResponse({ type: PriceResponse })
+  @ApiTags('Stripe: Price')
+  @Post('/price/:priceId/update')
+  updatePrice(@Param('priceId') priceId: string, @Body() dto: UpdatePriceDto): Promise<PriceResponse> {
+    return this.stripeService.updatePrice(priceId, dto);
   }
 
   @ApiResponse({ type: BaseDataResponse })
@@ -177,11 +188,41 @@ export class StripeController {
     return this.stripeService.getPriceList();
   }
 
+  @ApiResponse({ type: BaseDataResponse<PriceDto> })
+  @ApiTags('Stripe: Price')
+  @Get('/price/:priceId')
+  priceById(@Param('priceId') priceId: string): Promise<BaseDataResponse<PriceDto>> {
+    return this.stripeService.getPriceById(priceId);
+  }
+  //#endregion
+
+  //#region Product
+  @ApiResponse({ type: ProductResponse })
+  @ApiTags('Stripe: Product')
+  @Post('/product/create')
+  createProduct(@Body() dto: CreateProductDto): Promise<ProductResponse> {
+    return this.stripeService.createProduct(dto);
+  }
+
+  @ApiResponse({ type: ProductResponse })
+  @ApiTags('Stripe: Product')
+  @Post('/product/:productId/update')
+  updateProduct(@Param('productId') productId: string, @Body() dto: UpdateProductDto): Promise<ProductResponse> {
+    return this.stripeService.updateProduct(productId, dto);
+  }
+
   @ApiResponse({ type: BaseDataResponse })
   @ApiTags('Stripe: Product')
   @Get('/product')
   productList(): Promise<BaseDataResponse<ProductDto[]>> {
     return this.stripeService.getProductList();
+  }
+
+  @ApiResponse({ type: BaseDataResponse<ProductDto> })
+  @ApiTags('Stripe: Product')
+  @Get('/product/:productId')
+  productById(@Param('productId') productId: string): Promise<BaseDataResponse<ProductDto>> {
+    return this.stripeService.getProductById(productId);
   }
   //#endregion
 

@@ -15,6 +15,9 @@ export * from './save-quote.dto';
 export * from './create-subscription-item.dto';
 export * from './create-payment-intent.dto';
 export * from './update-subscription.dto';
+export * from './create-product.dto';
+export * from './update-price.dto';
+export * from './update-product.dto';
 
 export * from './stripe/customer.dto';
 export * from './stripe/subscription-item.dto';
@@ -39,3 +42,4 @@ export * from './create-usage-record.response';
 export * from './create-payment-method.response';
 export * from './save-quote.response';
 export * from './payment-intent.response';
+export * from './product.response';

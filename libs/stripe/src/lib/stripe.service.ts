@@ -42,6 +42,10 @@ import {
   CustomerDto,
   PaymentMethodDto,
   PaymentItemDto,
+  CreateProductDto,
+  ProductResponse,
+  UpdatePriceDto,
+  UpdateProductDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -57,6 +61,7 @@ export class StripeService {
     private readonly logger: StripeLogger
   ) {}
 
+  //#region Payment Intent
   async createPaymentIntent(dto: CreatePaymentIntentDto): Promise<PaymentIntentResponse> {
     try {
       const validateRes = this.validateItems(dto.items);
@@ -82,11 +87,15 @@ export class StripeService {
   }
 
   async getPaymentIntentById(id: string): Promise<BaseDataResponse<PaymentIntentDto>> {
-    const pi = await this.stripe.paymentIntents.retrieve(id);
-    return {
-      success: true,
-      data: this.paymentIntentToDto(pi)
-    };
+    try {
+      const pi = await this.stripe.paymentIntents.retrieve(id);
+      return {
+        success: true,
+        data: this.paymentIntentToDto(pi)
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Get Payment Intent');
+    }
   }
 
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponse> {
@@ -137,7 +146,9 @@ export class StripeService {
       return this.handleError(exception, 'Create Checkout Session');
     }
   }
+  //#endregion
 
+  //#region Customer
   async createCustomer(dto: CreateCustomerDto): Promise<CustomerResponse> {
     try {
       let paymentMethod = dto.paymentMethod;
@@ -322,7 +333,9 @@ export class StripeService {
       return this.handleError(exception, 'Customer Payment Method List');
     }
   }
+  //#endregion
 
+  //#region Price
   async createPrice(dto: CreatePriceDto): Promise<PriceResponse> {
     try {
       const payload = {
@@ -371,11 +384,48 @@ export class StripeService {
     }
   }
 
-  async getPriceById(id: string): Promise<PriceDto> {
-    const price = await this.stripe.prices.retrieve(id, {
-      expand: ['tiers']
-    });
-    return this.priceToDto(price);
+  async updatePrice(priceId: string, dto: UpdatePriceDto): Promise<PriceResponse> {
+    try {
+      const payload = {
+        currency: dto.currency || this.config.currency || 'usd',
+        active: dto.active != undefined ? dto.active : true,
+        billing_scheme: dto.billingScheme,
+        lookup_key: dto.lookupKey,
+        metadata: dto.metadata,
+        nickname: dto.nickname,
+        recurring: dto.recurring ? {
+          aggregate_usage: dto.recurring.aggregateUsage,
+          interval: dto.recurring.interval,
+          interval_count: dto.recurring.intervalCount == null ? undefined : dto.recurring.intervalCount,
+          trial_period_days: dto.recurring.trialPeriodDays == null ? undefined : dto.recurring.trialPeriodDays,
+          usage_type: dto.recurring.usageType
+        } : undefined,
+        tax_behavior: dto.taxBehavior,
+        tiers_mode: dto.tiersMode,
+        transfer_lookup_key: dto.transferLookupKey
+      } as Stripe.PriceUpdateParams;
+      const price = await this.stripe.prices.update(priceId, payload);
+      return {
+        success: true,
+        priceId: price.id
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Create Price');
+    }
+  }
+
+  async getPriceById(id: string): Promise<BaseDataResponse<PriceDto>> {
+    try {
+      const price = await this.stripe.prices.retrieve(id, {
+        expand: ['tiers']
+      });
+      return {
+        success: true,
+        data: this.priceToDto(price)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Price');
+    }
   }
 
   async getPriceList(productId?: string): Promise<BaseDataResponse<PriceDto[]>> {
@@ -397,6 +447,78 @@ export class StripeService {
       return this.handleError(exception, 'Get Price List');
     }
   }
+  //#endregion
+
+  //#region Product
+  async createProduct(dto: CreateProductDto): Promise<ProductResponse> {
+    try {
+      const payload = {
+        name: dto.name,
+        active: dto.active,
+        attributes: dto.attributes,
+        caption: dto.caption,
+        deactivate_on: dto.deactivateOn,
+        default_price_data: dto.defaultPriceData ? {
+          currency: dto.defaultPriceData.currency,
+          currency_options: dto.defaultPriceData.currencyOptions,
+          recurring: dto.defaultPriceData.recurring ? {
+            interval: dto.defaultPriceData.recurring.interval,
+            interval_count: dto.defaultPriceData.recurring.intervalCount
+          } : undefined,
+          tax_behavior: dto.defaultPriceData.taxBehavior,
+          unit_amount: dto.defaultPriceData.unitAmount,
+          unit_amount_decimal: dto.defaultPriceData.unitAmountDecimal
+        } : undefined,
+        description: dto.description,
+        images: dto.images,
+        metadata: dto.metadata,
+        package_dimensions: dto.packageDimensions,
+        shippable: dto.shippable,
+        statement_descriptor: dto.statementDescriptor,
+        tax_code: dto.taxCode,
+        type: dto.type,
+        unit_label: dto.unitLabel,
+        url: dto.url
+      } as Stripe.ProductCreateParams;
+      const product = await this.stripe.products.create(payload);
+      return {
+        success: true,
+        productId: product.id,
+        defaultPriceId: product.default_price as string
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Create Product');
+    }
+  }
+
+  async updateProduct(productId: string, dto: UpdateProductDto): Promise<ProductResponse> {
+    try {
+      const payload = {
+        name: dto.name,
+        active: dto.active,
+        attributes: dto.attributes,
+        caption: dto.caption,
+        deactivate_on: dto.deactivateOn,
+        description: dto.description,
+        images: dto.images,
+        metadata: dto.metadata,
+        package_dimensions: dto.packageDimensions,
+        shippable: dto.shippable,
+        statement_descriptor: dto.statementDescriptor,
+        tax_code: dto.taxCode,
+        unit_label: dto.unitLabel,
+        url: dto.url
+      } as Stripe.ProductUpdateParams;
+      const product = await this.stripe.products.update(productId, payload);
+      return {
+        success: true,
+        productId: product.id,
+        defaultPriceId: product.default_price as string
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Create Product');
+    }
+  }
 
   async getProductList(): Promise<BaseDataResponse<ProductDto[]>> {
     try {
@@ -415,6 +537,20 @@ export class StripeService {
     }
   }
 
+  async getProductById(productId: string): Promise<BaseDataResponse<ProductDto>> {
+    try {
+      const product = await this.stripe.products.retrieve(productId);
+      return {
+        success: true,
+        data: this.productToDto(product)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Price List');
+    }
+  }
+  //#endregion 
+
+  //#region Subscription
   async createSubscription(dto: CreateSubscriptionDto): Promise<SubscriptionResponse> {
     try {
       this.stripe.events
@@ -628,22 +764,6 @@ export class StripeService {
     }
   }
 
-  async createUsageRecord(subscriptionItemId: string, dto: CreateUsageRecordDto): Promise<CreateUsageRecordResponse> {
-    try {
-      const usageRecord = await this.stripe.subscriptionItems.createUsageRecord(subscriptionItemId, {
-        quantity: dto.quantity,
-        action: dto.action,
-        timestamp: dto.timestamp
-      });
-      return {
-        success: true,
-        usageRecord: this.usageRecordToDto(usageRecord)
-      }
-    } catch (exception) {
-      return this.handleError(exception, 'Create Usage Record');
-    }
-  }
-
   async listSubscriptionItems(subscriptionId: string): Promise<BaseDataResponse<Stripe.SubscriptionItem[]>> {
     try {
       const subscriptionItems = await this.stripe.subscriptionItems.list({
@@ -652,18 +772,6 @@ export class StripeService {
       return {
         success: true,
         data: subscriptionItems.data
-      }
-    } catch (exception) {
-      return this.handleError(exception, 'List Usage Record Summaries');
-    }
-  }
-
-  async listUsageRecordSummaries(subscriptionItemId: string): Promise<BaseDataResponse<Stripe.UsageRecordSummary[]>> {
-    try {
-      const usageRecordSummaries = await this.stripe.subscriptionItems.listUsageRecordSummaries(subscriptionItemId)
-      return {
-        success: true,
-        data: usageRecordSummaries.data
       }
     } catch (exception) {
       return this.handleError(exception, 'List Usage Record Summaries');
@@ -681,7 +789,39 @@ export class StripeService {
       return this.handleError(exception, 'Update Default Subscription Payment Method From PaymentIntent')
     }
   }
+  //#endregion
 
+  //#region Usage Record
+  async createUsageRecord(subscriptionItemId: string, dto: CreateUsageRecordDto): Promise<CreateUsageRecordResponse> {
+    try {
+      const usageRecord = await this.stripe.subscriptionItems.createUsageRecord(subscriptionItemId, {
+        quantity: dto.quantity,
+        action: dto.action,
+        timestamp: dto.timestamp
+      });
+      return {
+        success: true,
+        usageRecord: this.usageRecordToDto(usageRecord)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Usage Record');
+    }
+  }
+
+  async listUsageRecordSummaries(subscriptionItemId: string): Promise<BaseDataResponse<Stripe.UsageRecordSummary[]>> {
+    try {
+      const usageRecordSummaries = await this.stripe.subscriptionItems.listUsageRecordSummaries(subscriptionItemId)
+      return {
+        success: true,
+        data: usageRecordSummaries.data
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'List Usage Record Summaries');
+    }
+  }
+  //#endregion
+
+  //#region Invoice
   async upcomingInvoicePreview(dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
     try {
       const invoice = await this.stripe.invoices.retrieveUpcoming({
@@ -698,13 +838,19 @@ export class StripeService {
   }
 
   async getInvoiceById(id: string): Promise<BaseDataResponse<InvoiceDto>> {
-    const invoice = await this.stripe.invoices.retrieve(id);
-    return {
-      success:  true,
-      data: this.invoiceToDto(invoice)
-    };
+    try {
+      const invoice = await this.stripe.invoices.retrieve(id);
+      return {
+        success:  true,
+        data: this.invoiceToDto(invoice)
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Get Invoice');
+    }
   }
+  //#endregion
 
+  //#region Quote
   async createQuote(dto: SaveQuoteDto): Promise<SaveQuoteResponse> {
     try {
       let lineItems = undefined;
@@ -808,6 +954,7 @@ export class StripeService {
       return this.handleError(exception, 'Get Customer Quotes');
     }
   }
+  //#endregion
 
   buildWebhookEvent(payload: string, headerSignature: string) {
     return this.stripe.webhooks.constructEventAsync(payload, headerSignature, this.config.webHookSignature);
