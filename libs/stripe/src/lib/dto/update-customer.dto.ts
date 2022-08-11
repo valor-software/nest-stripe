@@ -1,9 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsNotEmptyObject, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { CreatePaymentMethodDto } from './create-payment-method.dto';
 import { AddressDto } from './shared.dto';
 
-export class CreateCustomerShippingDto {
+export class UpdateCustomerShippingDto {
   @ApiProperty()
   @IsNotEmptyObject()
   address: AddressDto;
@@ -18,26 +17,22 @@ export class CreateCustomerShippingDto {
   phone?: string;
 }
 
-export class CreateCustomerDto {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
+export class UpdateCustomerDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  name: string;
+  @IsNotEmptyObject()
+  address: AddressDto;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNotEmptyObject()
-  address?: AddressDto;
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -54,16 +49,12 @@ export class CreateCustomerDto {
   invoicePrefix?: string;
 
   @ApiPropertyOptional()
-  metadata: {[name: string]: string |  number | null};
-
-  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  paymentMethod?: string;
+  name: string;
 
   @ApiPropertyOptional()
-  @IsOptional()
-  paymentMethodData?: CreatePaymentMethodDto;
+  metadata: {[name: string]: string |  number | null};
 
   @ApiPropertyOptional({
     type: 'string',
@@ -86,8 +77,9 @@ export class CreateCustomerDto {
   @IsString()
   source?: string;
 
-  @ApiPropertyOptional({ type: CreateCustomerShippingDto })
-  shipping?: CreateCustomerShippingDto;
+  @ApiPropertyOptional({ type: UpdateCustomerShippingDto })
+  shipping?: UpdateCustomerShippingDto;
+
   @ApiPropertyOptional({
     enum: ['exempt', 'none', 'reverse'],
     default: 'none' ,

@@ -33,7 +33,8 @@ import {
   ProductResponse,
   CreateProductDto,
   UpdatePriceDto,
-  UpdateProductDto
+  UpdateProductDto,
+  UpdateCustomerDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -77,6 +78,13 @@ export class StripeController {
   @Post('/customer/create')
   createCustomer(@Body() dto: CreateCustomerDto): Promise<CustomerResponse> {
     return this.stripeService.createCustomer(dto);
+  }
+
+  @ApiResponse({ type: CustomerResponse })
+  @ApiTags('Stripe: Customer')
+  @Post('/customer/:customerId/update')
+  updateCustomer(@Param('customerId') customerId: string, @Body() dto: UpdateCustomerDto): Promise<CustomerResponse> {
+    return this.stripeService.updateCustomer(customerId, dto);
   }
 
   @ApiResponse({ type: CustomerResponse })
@@ -150,7 +158,7 @@ export class StripeController {
   }
   //#endregion
 
-  //#region Payement Method
+  //#region Payment Method
   @ApiResponse({ type: CreatePaymentMethodResponse })
   @ApiTags('Stripe: Payment Method')
   @Post('/payment-method/create')
@@ -301,6 +309,13 @@ export class StripeController {
   @Post('/quote/create')
   createQuote(@Body() dto: SaveQuoteDto): Promise<SaveQuoteResponse> {
     return this.stripeService.createQuote(dto);
+  }
+
+  @ApiResponse({ type: SaveQuoteResponse })
+  @ApiTags('Stripe: Quote')
+  @Post('/quote/:quoteId/update')
+  updateQuote(@Param('quoteId') quoteId: string, @Body() dto: SaveQuoteDto): Promise<SaveQuoteResponse> {
+    return this.stripeService.updateQuote(quoteId, dto);
   }
 
   @ApiResponse({ type: SaveQuoteResponse })

@@ -18,6 +18,7 @@ export * from './update-subscription.dto';
 export * from './create-product.dto';
 export * from './update-price.dto';
 export * from './update-product.dto';
+export * from './update-customer.dto';
 
 export * from './stripe/customer.dto';
 export * from './stripe/subscription-item.dto';

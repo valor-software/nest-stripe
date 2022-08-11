@@ -46,6 +46,7 @@ import {
   ProductResponse,
   UpdatePriceDto,
   UpdateProductDto,
+  UpdateCustomerDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -164,9 +165,7 @@ export class StripeService {
         name: dto.name,
         description: dto.description,
         phone: dto.phone,
-        address: dto.addressLine1 || dto.addressLine2 ? {
-          line1: dto.addressLine1, line2: dto.addressLine2
-        } : null,
+        address: this.addressFromDto(dto.address),
         invoice_prefix: dto.invoicePrefix,
         metadata:dto.metadata,
         payment_method: paymentMethod,
@@ -175,7 +174,33 @@ export class StripeService {
         source: dto.source,
         shipping: dto.shipping ? {
           name: dto.shipping.name,
-          address: { line1: dto.shipping.address, line2: dto.shipping.addressLine2 },
+          address: this.addressFromDto(dto.shipping.address),
+          phone: dto.shipping.phone
+        } : undefined,
+        tax_exempt: dto.taxExempt
+      });
+      return { customerId: customer.id, success: true };
+    } catch (exception) {
+      return this.handleError(exception, 'Create Customer');
+    }
+  }
+
+  async updateCustomer(customerId: string, dto: UpdateCustomerDto): Promise<CustomerResponse> {
+    try {
+      const customer = await this.stripe.customers.update(customerId, {
+        email: dto.email,
+        name: dto.name,
+        description: dto.description,
+        phone: dto.phone,
+        address: this.addressFromDto(dto.address),
+        invoice_prefix: dto.invoicePrefix,
+        metadata:dto.metadata,
+        preferred_locales: dto.preferredLocales,
+        promotion_code: dto.promotionCode,
+        source: dto.source,
+        shipping: dto.shipping ? {
+          name: dto.shipping.name,
+          address: this.addressFromDto(dto.shipping.address),
           phone: dto.shipping.phone
         } : null,
         tax_exempt: dto.taxExempt
@@ -211,6 +236,49 @@ export class StripeService {
     }
   }
 
+  async attachPaymentMethod(paymentMethodId: string, customerId: string, useAsDefault?: boolean): Promise<CreatePaymentMethodResponse> {
+    try {
+      const paymentMethod = await this.stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId
+      });
+      if (useAsDefault) {
+        await this.stripe.customers.update(customerId, {
+          invoice_settings: {
+            default_payment_method: paymentMethodId,
+          },
+        });
+      }
+      return { success: true, paymentMethodId: paymentMethod.id }
+    } catch (exception) {
+      return this.handleError(exception, 'Attach Payment Method');
+    }
+  }
+
+  async detachPaymentMethod(paymentMethodId: string): Promise<CreatePaymentMethodResponse> {
+    try {
+      const paymentMethod = await this.stripe.paymentMethods.detach(paymentMethodId);
+      return { success: true, paymentMethodId: paymentMethod.id }
+    } catch (exception) {
+      return this.handleError(exception, 'Detach Payment Method');
+    }
+  }
+
+  async customerPaymentMethodList(customerId: string, type: Stripe.PaymentMethodListParams.Type): Promise<BaseDataResponse<PaymentMethodDto[]>> {
+    try {
+      const paymentMethods = await this.stripe.customers.listPaymentMethods(customerId, {
+        type
+      });
+      return {
+        success: true,
+        data: paymentMethods.data.map(pm => this.paymentMethodToDto(pm))
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Customer Payment Method List');
+    }
+  }
+  //#endregion
+
+  //#region Payment Method
   async createPaymentMethod(dto: CreatePaymentMethodDto): Promise<CreatePaymentMethodResponse> {
     try {
       let card: Stripe.PaymentMethodCreateParams.Card1 | Stripe.PaymentMethodCreateParams.Card2 = dto.card as Card2Dto;
@@ -290,47 +358,6 @@ export class StripeService {
       return { success: true, paymentMethodId: paymentMethod.id };
     } catch (exception) {
       return this.handleError(exception, 'Create Payment Method');
-    }
-  }
-
-  async attachPaymentMethod(paymentMethodId: string, customerId: string, useAsDefault?: boolean): Promise<CreatePaymentMethodResponse> {
-    try {
-      const paymentMethod = await this.stripe.paymentMethods.attach(paymentMethodId, {
-        customer: customerId
-      });
-      if (useAsDefault) {
-        await this.stripe.customers.update(customerId, {
-          invoice_settings: {
-            default_payment_method: paymentMethodId,
-          },
-        });
-      }
-      return { success: true, paymentMethodId: paymentMethod.id }
-    } catch (exception) {
-      return this.handleError(exception, 'Attach Payment Method');
-    }
-  }
-
-  async detachPaymentMethod(paymentMethodId: string): Promise<CreatePaymentMethodResponse> {
-    try {
-      const paymentMethod = await this.stripe.paymentMethods.detach(paymentMethodId);
-      return { success: true, paymentMethodId: paymentMethod.id }
-    } catch (exception) {
-      return this.handleError(exception, 'Detach Payment Method');
-    }
-  }
-
-  async customerPaymentMethodList(customerId: string, type: Stripe.PaymentMethodListParams.Type): Promise<BaseDataResponse<PaymentMethodDto[]>> {
-    try {
-      const paymentMethods = await this.stripe.customers.listPaymentMethods(customerId, {
-        type
-      });
-      return {
-        success: true,
-        data: paymentMethods.data.map(pm => this.paymentMethodToDto(pm))
-      }
-    } catch (exception) {
-      return this.handleError(exception, 'Customer Payment Method List');
     }
   }
   //#endregion
@@ -900,6 +927,56 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Create Quote');
+    }
+  }
+
+  async updateQuote(quoteId: string, dto: SaveQuoteDto): Promise<SaveQuoteResponse> {
+    try {
+      let lineItems = undefined;
+      if (dto.lineItems) {
+        lineItems = dto.lineItems.map(i => ({
+          price: i.price,
+          price_data: i.priceData ? {
+            currency: i.priceData.currency,
+            product: i.priceData.product,
+            recurring: i.priceData.recurring ? {
+              interval: i.priceData.recurring.interval,
+              interval_count: i.priceData.recurring.intervalCount
+            } : undefined,
+            tax_behavior: i.priceData.taxBehavior,
+            unit_amount: i.priceData.unitAmount,
+            unit_amount_decimal: i.priceData.unitAmountDecimal
+          } : undefined,
+          quantity: i.quantity,
+          tax_rates: i.taxRates
+        } as Stripe.QuoteCreateParams.LineItem))
+      }
+      const quote = await this.stripe.quotes.update(quoteId, {
+        application_fee_amount: dto.applicationFeeAmount,
+        application_fee_percent: dto.applicationFeePercent,
+        automatic_tax: dto.automaticTaxEnabled != undefined ? { enabled: dto.automaticTaxEnabled } : undefined,
+        collection_method: dto.collectionMethod,
+        customer: dto.customer,
+        default_tax_rates: dto.defaultTaxRates,
+        description: dto.description,
+        discounts: dto.discounts,
+        footer: dto.footer,
+        invoice_settings: dto.invoiceSettings ? { days_until_due: dto.invoiceSettings.daysUntilDue } : undefined,
+        line_items: lineItems,
+        metadata: dto.metadata,
+        on_behalf_of: dto.onBehalfOf,
+        subscription_data: dto.subscriptionData ? {
+          effective_date: dto.subscriptionData.effectiveDate,
+          trial_period_days: dto.subscriptionData.trialPeriodDays
+        } : undefined,
+        transfer_data: dto.transferData
+      });
+      return {
+        success: true,
+        quoteId: quote.id,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Update Quote');
     }
   }
 
@@ -1579,5 +1656,16 @@ export class StripeService {
       } : null,
       wechatPay: pm.wechat_pay
     }
+  }
+
+  private addressFromDto(dto: AddressDto): Stripe.Address {
+    return dto ? {
+      city: dto.city,
+      country: dto.country,
+      line1: dto.line1,
+      line2: dto.line2,
+      postal_code: dto.postalCode,
+      state: dto.state
+    } : undefined;
   }
 }
