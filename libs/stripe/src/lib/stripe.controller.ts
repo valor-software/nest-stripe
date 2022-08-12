@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Logger, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import Stripe from 'stripe';
@@ -217,6 +217,13 @@ export class StripeController {
   @Post('/product/:productId/update')
   updateProduct(@Param('productId') productId: string, @Body() dto: UpdateProductDto): Promise<ProductResponse> {
     return this.stripeService.updateProduct(productId, dto);
+  }
+
+  @ApiResponse({ type: ProductResponse })
+  @ApiTags('Stripe: Product')
+  @Delete('/product/:productId/delete')
+  deleteProduct(@Param('productId') productId: string): Promise<ProductResponse> {
+    return this.stripeService.deleteProduct(productId);
   }
 
   @ApiResponse({ type: BaseDataResponse })

@@ -551,6 +551,18 @@ export class StripeService {
     }
   }
 
+  async deleteProduct(productId: string): Promise<ProductResponse> {
+    try {
+      const product = await this.stripe.products.del(productId);
+      return {
+        success: true,
+        productId: product.id
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Delete Product');
+    }
+  }
+
   async getProductList(): Promise<BaseDataResponse<ProductDto[]>> {
     try {
       const productList = await this.stripe.products.list();
@@ -1037,7 +1049,7 @@ export class StripeService {
   }
   //#endregion
 
-  //#region Webbhooks
+  //#region Webhooks
 
   buildWebhookEvent(payload: string, headerSignature: string) {
     return this.stripe.webhooks.constructEventAsync(payload, headerSignature, this.config.webHookSignature);
@@ -1141,6 +1153,7 @@ export class StripeService {
     return value;
   }
 
+  //#region To DTO
   private addressToDto(address: Stripe.Address | undefined): AddressDto | undefined {
     if (!address) {
       return address as undefined | null;
@@ -1752,6 +1765,7 @@ export class StripeService {
       url: we.url
     }
   }
+  //#endregion
 
   private addressFromDto(dto: AddressDto): Stripe.Address {
     return dto ? {
