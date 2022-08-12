@@ -1,8 +1,8 @@
-import { BadRequestException, Controller, Logger, Post, RawBodyRequest, Req, UseFilters } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Delete, Get, Logger, Param, Post, RawBodyRequest, Req, UseFilters, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
-import Stripe from 'stripe';
-import { StripeService } from '../stripe.service';
+import { BaseDataResponse, BaseResponse, BaseSaveResponse, CreateWebhookEndpointDto, UpdateWebhookEndpointDto, WebhookEndpointDto } from '../dto';
+import { StripeAuthGuard } from '../stripe-auth.guard';
 import { WebhookExceptionFilter } from './webhook.exception.filter';
 import { WebhookResponse } from './webhook.interfaces';
 import { WebhookService } from './webhook.service';
@@ -11,171 +11,60 @@ import { WebhookService } from './webhook.service';
 @Controller('stripe/webhooks')
 @UseFilters(new WebhookExceptionFilter())
 export class WebhookController {
-  constructor(
-    private readonly webhookService: WebhookService,
-    private readonly stripeService: StripeService
-  ) {}
+  constructor(private readonly webhookService: WebhookService) {}
 
   @ApiResponse({ type: WebhookResponse })
-  @Post('/all')
+  @Post('events')
   async all(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
     try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyAll(evt);
+      const evt = await this.webhookService.buildEvent(req);
+      this.webhookService.notify(evt);
       return { success: true }
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  //#region payment-intent
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/payment-intent-created')
-  async paymentIntentCreated(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyPaymentIntentCreated(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
+  @ApiBearerAuth()
+  @UseGuards(StripeAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Get('webhook-endpoints')
+  getWebhookEndpoints(): Promise<BaseDataResponse<WebhookEndpointDto[]>> {
+    return this.webhookService.webhookEndpoints();
   }
 
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/payment-intent-succeeded')
-  async paymentIntentSucceeded(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyPaymentIntentSucceeded(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
+  @ApiBearerAuth()
+  @UseGuards(StripeAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Get('webhook-endpoints/:id')
+  getWebhookEndpointById(@Param('id') id: string): Promise<BaseDataResponse<WebhookEndpointDto>> {
+    return this.webhookService.webhookEndpointById(id);
   }
 
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/payment-intent-succeeded')
-  async paymentIntentCanceled(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyPaymentIntentCanceled(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-  //#endregion
-
-  //#region charge
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/charge-refunded')
-  async chargeRefunded(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyChargeRefunded(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
+  @ApiBearerAuth()
+  @UseGuards(StripeAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Post('webhook-endpoints/create')
+  createWebhookEndpoint(@Body() dto: CreateWebhookEndpointDto): Promise<BaseSaveResponse> {
+    return this.webhookService.createWebhookEndpoint(dto);
   }
 
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/charge-succeeded')
-  async chargeSucceeded(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyChargeSucceeded(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
+  @ApiBearerAuth()
+  @UseGuards(StripeAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Post('webhook-endpoints/:id/update')
+  updateWebhookEndpoint(@Param('id') id: string, @Body() dto: UpdateWebhookEndpointDto): Promise<BaseSaveResponse> {
+    return this.webhookService.updateWebhookEndpoint(id, dto);
   }
 
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/charge-failed')
-  async chargeFailed(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyChargeFailed(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
+  @ApiBearerAuth()
+  @UseGuards(StripeAuthGuard)
+  @UsePipes(new ValidationPipe())
+  @Delete('webhook-endpoints/:id/delete')
+  deleteWebhookEndpoint(@Param('id') id: string): Promise<BaseResponse> {
+    return this.webhookService.deleteWebhookEndpoint(id);
   }
-  //#endregion
-
-  //#region Invoice
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/invoice-payment-succeeded')
-  async invoicePaymentSucceeded(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      const dataObject = evt.data.object;
-      if (dataObject['billing_reason'] === 'subscription_create') {
-        const subscriptionId = dataObject['subscription']
-        const paymentIntentId = dataObject['payment_intent']
-        await this.stripeService.updateDefaultSubscriptionPaymentMethodFromPaymentIntent(subscriptionId, paymentIntentId)
-      }
-      this.webhookService.notifyInvoicePaymentSucceeded(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/invoice-payment-failed')
-  async invoicePaymentFailed(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyInvoicePaymentFailed(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/invoice-payment-finalized')
-  async invoicePaymentFinalized(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyInvoicePaymentFinalized(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-  //#endregion
-
-  //#region Customer Subscription
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/customer-subscription-deleted')
-  async customerSubscriptionDeleted(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyCustomerSubscriptionDeleted(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-  @ApiResponse({ type: WebhookResponse })
-  @Post('/customer-subscription-trial-will-end')
-  async customerSubscriptionTrialWillEnd(@Req() req: RawBodyRequest<Request>): Promise<WebhookResponse> {
-    try {
-      const evt = await this.getEvent(req);
-      this.webhookService.notifyCustomerSubscriptionTrialWillEnd(evt);
-      return { success: true }
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-  //#endregion
   
-  private getEvent(req: RawBodyRequest<Request>): Promise<Stripe.Event> {
-    const payload = req.rawBody.toString('utf-8');
-      const headerSignature = req.header('stripe-signature');
-      return this.stripeService.buildWebhookEvent(payload, headerSignature);
-  }
 
   private handleError(error: any) {
     Logger.error(error, 'Webhook handler');

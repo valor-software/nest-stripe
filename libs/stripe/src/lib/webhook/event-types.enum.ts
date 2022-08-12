@@ -1,4 +1,5 @@
 export enum WebhookEventType {
+	all = '*',
 	/**
 	* Occurs whenever an account status or property has changed.
 	*/

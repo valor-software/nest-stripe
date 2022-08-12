@@ -47,6 +47,10 @@ import {
   UpdatePriceDto,
   UpdateProductDto,
   UpdateCustomerDto,
+  WebhookEndpointDto,
+  CreateWebhookEndpointDto,
+  UpdateWebhookEndpointDto,
+  BaseSaveResponse,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -1033,9 +1037,83 @@ export class StripeService {
   }
   //#endregion
 
+  //#region Webbhooks
+
   buildWebhookEvent(payload: string, headerSignature: string) {
     return this.stripe.webhooks.constructEventAsync(payload, headerSignature, this.config.webHookSignature);
   }
+
+  async webhookEndpoints(): Promise<BaseDataResponse<WebhookEndpointDto[]>> {
+    try {
+      const webhookEndpoints = await this.stripe.webhookEndpoints.list();
+      return {
+        success: true,
+        data: webhookEndpoints.data?.map(w => this.webhookEndpointToDto(w))
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Webhook Endpoints');
+    }
+  }
+
+  async webhookEndpointById(webhookEndpointId: string): Promise<BaseDataResponse<WebhookEndpointDto>> {
+    try {
+      const webhookEndpoint = await this.stripe.webhookEndpoints.retrieve(webhookEndpointId);
+      return {
+        success: true,
+        data: this.webhookEndpointToDto(webhookEndpoint)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Webhook Endpoints');
+    }
+  }
+
+  async createWebhookEndpoint(dto: CreateWebhookEndpointDto): Promise<BaseSaveResponse> {
+    try {
+      const we = await this.stripe.webhookEndpoints.create({
+        enabled_events: dto.enabledEvents,
+        url: dto.url,
+        connect: dto.connect,
+        description: dto.description,
+        metadata: dto.metadata
+      });
+      return {
+        success: true,
+        recordId: we.id,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Webhook Endpoint');
+    }
+  }
+
+  async updateWebhookEndpoint(webhookEndpointId: string, dto: UpdateWebhookEndpointDto): Promise<BaseSaveResponse> {
+    try {
+      const we = await this.stripe.webhookEndpoints.update(webhookEndpointId,{
+        enabled_events: dto.enabledEvents,
+        url: dto.url,
+        description: dto.description,
+        metadata: dto.metadata,
+        disabled: dto.disabled
+      });
+      return {
+        success: true,
+        recordId: we.id,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Update Webhook Endpoint');
+    }
+  }
+
+  async deleteWebhookEndpoint(webhookEndpointId: string): Promise<BaseResponse> {
+    try {
+      await this.stripe.webhookEndpoints.del(webhookEndpointId);
+      return {
+        success: true
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Delete Webhook Endpoint');
+    }
+  }
+  //#endregion
 
   private handleError(exception: any, context: string): BaseResponse {
     console.log(exception)
@@ -1655,6 +1733,23 @@ export class StripeService {
         routingNumber: pm.us_bank_account.routing_number
       } : null,
       wechatPay: pm.wechat_pay
+    }
+  }
+
+  private webhookEndpointToDto(we: Stripe.WebhookEndpoint): WebhookEndpointDto {
+    return {
+      id: we.id,
+      object: we.object,
+      apiVersion: we.api_version,
+      application: we.application,
+      created: we.created,
+      description: we.description,
+      enabledEvents: we.enabled_events,
+      liveMode: we.livemode,
+      metadata: we.metadata,
+      secret: we.secret,
+      status: we.status,
+      url: we.url
     }
   }
 
