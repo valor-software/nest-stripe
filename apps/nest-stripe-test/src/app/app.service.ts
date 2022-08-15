@@ -26,7 +26,6 @@ export class AppService {
       const subscription = subscriptionRes.data;
       subscription.items.forEach(async si => {
         if (si.plan.usageType === 'metered') {
-          const existingRes = await this.stripeService.listUsageRecordSummaries(si.id);
           const r = await this.stripeService.createUsageRecord(si.id, {
             quantity: si.quantity || 1,
             action: 'increment',
