@@ -17,7 +17,7 @@ const exportList = [StripeService, WebhookService];
   exports: exportList,
 })
 export class StripeModule {
-  static configure(config: StripeConfig, authGuard: Type<CanActivate>): DynamicModule {
+  static forRoot(config: StripeConfig, authGuard: Type<CanActivate>): DynamicModule {
     return {
       module: StripeModule,
       controllers: controllerList,

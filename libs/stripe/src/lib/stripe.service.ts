@@ -580,6 +580,24 @@ export class StripeService {
     }
   }
 
+  async getProductListByName(name: string): Promise<BaseDataResponse<ProductDto[]>> {
+    try {
+      const query = `name:"${name}"`;
+      const productList = await this.stripe.products.search({query});
+      const products = productList.data.map((p) => this.productToDto(p));
+      await Promise.all(products.map(async (p, i) => {
+        const prices = await this.getPriceList(p.id);
+        products[i].prices = prices.data;
+      }))
+      return {
+        success: true,
+        data: products
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Get Product List');
+    }
+  }
+
   async getProductById(productId: string): Promise<BaseDataResponse<ProductDto>> {
     try {
       const product = await this.stripe.products.retrieve(productId);

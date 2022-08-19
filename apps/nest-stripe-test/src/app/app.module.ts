@@ -6,7 +6,7 @@ import { AppService } from './app.service';
 import { AppAuthGuard } from './auth.guard';
 
 @Module({
-  imports: [StripeModule.configure({
+  imports: [StripeModule.forRoot({
     apiKey: process.env.STRIPE_API_KEY,
     webHookSignature: process.env.STRIPE_WEBHOOK_SIGNATURE,
     successUrl: 'http://localhost:3333/purchase-success',

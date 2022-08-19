@@ -54,7 +54,7 @@ export class CreateCustomerDto {
   invoicePrefix?: string;
 
   @ApiPropertyOptional()
-  metadata: {[name: string]: string |  number | null};
+  metadata?: {[name: string]: string |  number | null};
 
   @ApiPropertyOptional()
   @IsOptional()
