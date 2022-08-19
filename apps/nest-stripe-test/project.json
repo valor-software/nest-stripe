@@ -1,5 +1,4 @@
 {
-  "root": "apps/nest-stripe-test",
   "sourceRoot": "apps/nest-stripe-test/src",
   "projectType": "application",
   "targets": {

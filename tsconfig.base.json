@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@nest/stripe": ["libs/stripe/src/index.ts"]
+      "@nest/stripe": ["libs/stripe/src/index.ts"],
+      "@npm-test": ["libs/npm-test/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

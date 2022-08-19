@@ -1,5 +1,4 @@
 {
-  "root": "libs/stripe",
   "sourceRoot": "libs/stripe/src",
   "targets": {
     "build": {
@@ -12,6 +11,18 @@
         "main": "libs/stripe/src/index.ts",
         "assets": ["libs/stripe/*.md"]
       }
+    },
+    "publish": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "node tools/scripts/publish.mjs stripe {args.ver} {args.tag}"
+      },
+      "dependsOn": [
+        {
+          "projects": "self",
+          "target": "build"
+        }
+      ]
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
