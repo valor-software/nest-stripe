@@ -1,4 +1,4 @@
-import { StripeService, WebhookEventType, WebhookService } from '@nest/stripe';
+import { CreateCheckoutSessionDto, StripeService, WebhookEventType, WebhookService } from '@nest/stripe';
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 
@@ -11,6 +11,15 @@ export class AppService {
     this.stripeWebhookService.subscribeToEvent(WebhookEventType.invoicePaid).subscribe(console.log);
     this.stripeWebhookService.subscribeToEvent(WebhookEventType.customerSubscriptionCreated).subscribe((e) => this.createMeteredUsage(e));
     this.stripeWebhookService.subscribeToEvent(WebhookEventType.customerSubscriptionUpdated).subscribe((e) => this.createMeteredUsage(e));
+  }
+
+  async creteCheckoutSession(dto: CreateCheckoutSessionDto) {
+    const response = await this.stripeService.createCheckoutSession(dto);
+    if (response.success) {
+      return response.sessionId
+    } else {
+      throw new Error(response.errorMessage);
+    }
   }
 
   getConfig(): any {
