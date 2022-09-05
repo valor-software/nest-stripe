@@ -8,7 +8,8 @@
     "build": "npm run nx run stripe:build",
     "test": "nx test",
     "build:app": "npm run nx run nest-stripe-test:build",
-    "run:app": "node dist/apps/nest-stripe-test/main.js"
+    "run:app": "node dist/apps/nest-stripe-test/main.js",
+    "publish": "cd dist/libs/stripe && npm publish --access=public"
   },
   "private": true,
   "dependencies": {
@@ -48,19 +49,5 @@
     "prettier": "2.7.1",
     "ts-jest": "28.0.6",
     "typescript": "4.7.4"
-  },
-  "description": "Stripe service with DTO's and swagger for nestjs projects. Include Webhooks listeners and Event enums.",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/valor-software/nest-stripe.git"
-  },
-  "keywords": [
-    "nestjs",
-    "stripe"
-  ],
-  "author": "opavlovskyi-valor-software",
-  "bugs": {
-    "url": "https://github.com/valor-software/nest-stripe/issues"
-  },
-  "homepage": "https://github.com/valor-software/nest-stripe#readme"
+  }
 }

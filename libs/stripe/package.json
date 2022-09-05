@@ -1,6 +1,6 @@
 {
   "name": "@opavlovskyi/nest-stripe",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "type": "commonjs",
   "private": false,
   "author": "opavlovskyi-valor-software",
@@ -14,7 +14,7 @@
     "nestjs",
     "stripe"
   ],
-  "author": "opavlovskyi-valor-software",
+  "author": "oleksandr.pavlovskyi",
   "bugs": {
     "url": "https://github.com/valor-software/nest-stripe/issues"
   },
