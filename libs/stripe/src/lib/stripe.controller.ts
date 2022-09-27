@@ -266,7 +266,7 @@ export class StripeController {
   @ApiResponse({ type: SubscriptionResponse })
   @ApiTags('Stripe: Subscription')
   @Post('/subscription/:subscriptionId/cancel')
-  cancelSubscription(@Param() subscriptionId: string): Promise<SubscriptionResponse> {
+  cancelSubscription(@Param('subscriptionId') subscriptionId: string): Promise<SubscriptionResponse> {
     return this.stripeService.cancelSubscription({ subscriptionId });
   }
 
