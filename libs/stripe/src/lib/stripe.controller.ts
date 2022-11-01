@@ -34,7 +34,8 @@ import {
   CreateProductDto,
   UpdatePriceDto,
   UpdateProductDto,
-  UpdateCustomerDto
+  UpdateCustomerDto,
+  InvoicePreviewDto
 } from './dto';
 import { StripeAuthGuard } from './stripe-auth.guard';
 import { StripeService } from './stripe.service';
@@ -133,16 +134,6 @@ export class StripeController {
   @Get('/customer/:customerId/payment-method-list')
   customerPaymentMethodList(@Param('customerId') customerId: string, @Query('type') type: any): Promise<BaseDataResponse<any[]>> {
     return this.stripeService.customerPaymentMethodList(customerId, type);
-  }
-
-  @ApiResponse({ type: InvoicePreviewResponse })
-  @ApiTags('Stripe: Customer')
-  @Get('/customer/:customerId/upcoming-invoice-preview/:subscriptionId')
-  customerUpcomingInvoicePreview(@Param('customerId') customerId: string, @Param('subscriptionId') subscriptionId: string): Promise<InvoicePreviewResponse> {
-    return this.stripeService.upcomingInvoicePreview({
-      customerId,
-      subscriptionId
-    });
   }
 
   @ApiResponse({ type: SubscriptionsResponse })
@@ -291,6 +282,13 @@ export class StripeController {
   @Get('/invoice/:invoiceId')
   getInvoiceById(@Param('invoiceId') invoiceId: string): Promise<BaseDataResponse<InvoiceDto>> {
     return this.stripeService.getInvoiceById(invoiceId);
+  }
+
+  @ApiResponse({ type: InvoicePreviewResponse })
+  @ApiTags('Stripe: Invoice')
+  @Post('/invoice/retrieve-upcoming')
+  retrieveUpcomingInvoice(@Body() dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
+    return this.stripeService.upcomingInvoicePreview(dto);
   }
   //#endregion
 

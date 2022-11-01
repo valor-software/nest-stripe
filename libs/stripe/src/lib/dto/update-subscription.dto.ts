@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsBoolean,
+  IsDate,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -326,5 +327,10 @@ export class UpdateSubscriptionDto {
   @IsOptional()
   @IsNumber()
   trialPeriodDays?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDate()
+  prorationDate?: Date;
 
 }

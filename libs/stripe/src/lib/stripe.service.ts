@@ -51,6 +51,7 @@ import {
   CreateWebhookEndpointDto,
   UpdateWebhookEndpointDto,
   BaseSaveResponse,
+  SubscriptionCreateItemDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -690,11 +691,14 @@ export class StripeService {
 
   async updateSubscription(subscriptionId: string, dto: UpdateSubscriptionDto): Promise<SubscriptionResponse> {
     try {
-      const subscription = await this.stripe.subscriptions.update(subscriptionId, {
-        items: dto.items?.map(i => ({
-          price: i.priceId,
-          plan: i.planId,
-          quantity: i.quantity
+      const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+      const firstSubscriptionItem = subscription.items.data[0];
+      await this.stripe.subscriptions.update(subscriptionId, {
+        items: dto.items?.map((e, i) => ({
+          id: i === 0 ? firstSubscriptionItem?.id : subscription.items.data.find(si => si.price.id === e.priceId)?.id,
+          price: e.priceId,
+          plan: e.planId,
+          quantity: e.quantity
         })),
         add_invoice_items: dto.addInvoiceItems?.map(i => ({
           price: i.priceId,
@@ -742,11 +746,19 @@ export class StripeService {
         } : undefined,
         promotion_code: dto.promotionCode,
         trial_end: dto.trialEnd,
-        trial_from_plan: dto.trialFromPlan
+        trial_from_plan: dto.trialFromPlan,
+        proration_date: dto.prorationDate ? Math.floor(dto.prorationDate.valueOf() / 1000) : undefined,
+        expand: ['latest_invoice.payment_intent']
       });
+      const invoice = subscription.latest_invoice as Stripe.Invoice;
+      const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
       return {
         success: true,
-        subscriptionId: subscription.id
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        clientSecret: paymentIntent?.client_secret,
+        paymentIntentStatus: paymentIntent?.status,
+        latestInvoiceId: paymentIntent?.id
       }
     } catch (exception) {
       return this.handleError(exception, 'Update Subscription');
@@ -850,6 +862,8 @@ export class StripeService {
       return this.handleError(exception, 'Update Default Subscription Payment Method From PaymentIntent')
     }
   }
+
+  
   //#endregion
 
   //#region Usage Record
@@ -885,9 +899,17 @@ export class StripeService {
   //#region Invoice
   async upcomingInvoicePreview(dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
     try {
+      const subscription = await this.stripe.subscriptions.retrieve(dto.subscriptionId);
+      const items = dto.prices?.map((i, idx) => ({
+        id: subscription.items.data[idx]?.id,
+        price: i.priceId,
+        quantity: i.quantity
+      } as Stripe.InvoiceRetrieveUpcomingParams.SubscriptionItem));
       const invoice = await this.stripe.invoices.retrieveUpcoming({
         customer: dto.customerId,
-        subscription: dto.subscriptionId
+        subscription: dto.subscriptionId,
+        subscription_items: items,
+        subscription_proration_date: dto.prorationDate ? Math.floor(dto.prorationDate.valueOf() / 1000) :  Math.floor(Date.now() / 1000)
       })
       return {
         success: true,
