@@ -1,7 +1,7 @@
 name: push to npm
 on:
   push:
-    branches: main
+    branches: publish-to-npm
 
 jobs:
   cache:
@@ -36,3 +36,4 @@ jobs:
     - uses: JS-DevTools/npm-publish@v1
       with:
         token: ${{ secrets.NPM_TOKEN }}
+        package: ./dist/libs/stripe/package.json
