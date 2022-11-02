@@ -1,0 +1,38 @@
+name: push to npm
+on:
+  push:
+    branches: main
+
+jobs:
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      id: cache
+      with:
+        path: |
+          ~/.npm
+          node_modules
+          key: node-${{ hashFiles('**/package-lock.json') }}'
+    - run: npm ci
+      if: steps.cache.outputs.cache-hit != 'true'      
+
+  push-to-npm:
+    runs-on: ubuntu-latest
+    needs: cache
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      id: cache
+      with:
+        path: |
+          ~/.npm
+          node_modules
+          key: node-${{ hashFiles('**/package-lock.json') }}'
+    - run: npm ci
+      if: steps.cache.outputs.cache-hit != 'true'
+    - run: npm run build
+    - uses: JS-DevTools/npm-publish@v1
+      with:
+        token: ${{ secrets.NPM_TOKEN }}
