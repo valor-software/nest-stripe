@@ -2,7 +2,8 @@ name: pull_request_to_main
 on:
   pull_request:
   push:
-    branches: main
+    branches:
+      - main
 
 jobs:
   cache:
@@ -29,7 +30,7 @@ jobs:
         id: cpv
         uses: PostHog/check-package-version@v2
         with:
-          path: ./libs/stripe/package.json
+          path: ./libs/stripe
       - name: Echo output
         run: |
             echo "Committed version: ${{ steps.cpv.outputs.committed-version }}"
