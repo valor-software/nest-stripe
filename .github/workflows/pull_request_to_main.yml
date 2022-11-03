@@ -34,7 +34,12 @@ jobs:
       - name: Echo output
         run: |
             echo "Committed version: ${{ steps.cpv.outputs.committed-version }}"
-            echo "Published version: ${{ steps.cpv.outputs.published-version }}"        
+            echo "Published version: ${{ steps.cpv.outputs.published-version }}" 
+      - name: Failure Check Version
+        if: steps.cpv.outputs.is-new-version != 'true'
+        run: |
+          echo "Version Failed"
+          exit: 1
       - name: Install dependencies
         if: steps.cpv.outputs.is-new-version == 'true'
         uses: actions/cache@v3

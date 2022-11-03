@@ -1,7 +1,8 @@
 name: push to npm
 on:
   push:
-    branches: publish-to-npm
+    branches:
+     - publish-to-npm
 
 jobs:
   cache:
