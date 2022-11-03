@@ -29,7 +29,7 @@ jobs:
         id: cpv
         uses: PostHog/check-package-version@v2
         with:
-          path: ./dist/libs/stripe/package.json
+          path: ./libs/stripe/package.json
       - name: Echo output
         run: |
             echo "Committed version: ${{ steps.cpv.outputs.committed-version }}"
