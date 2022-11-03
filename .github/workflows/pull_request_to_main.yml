@@ -34,7 +34,7 @@ jobs:
         echo "Published version: ${{ steps.cpv.outputs.published-version }}"        
     - name: Install dependencies
       if: steps.cpv.outputs.is-new-version == 'true'
-      uses: actions/cache@v3
+    - uses: actions/cache@v3
       id: cache
       with:
         path: |
@@ -43,5 +43,4 @@ jobs:
         key: node-${{ hashFiles('**/package-lock.json') }}'
     - run: npm ci
       if: steps.cache.outputs.cache-hit != 'true'
-    - name: build
-      run: npm run build   
+    - run: npm run build   
