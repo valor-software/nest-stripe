@@ -1,0 +1,47 @@
+name: pull_request_to_main
+on:
+  pull_request:
+  push:
+    branches: main
+
+jobs:
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      id: cache
+      with:
+        path: |
+          ~/.npm
+          node_modules
+        key: node-${{ hashFiles('**/package-lock.json') }}'
+    - run: npm ci
+      if: steps.cache.outputs.cache-hit != 'true'
+
+  check-version:
+    needs: cache
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Check package version
+      id: cpv
+    - uses: PostHog/check-package-version@v2
+
+    - name: Echo output
+      run: |
+        echo "Committed version: ${{ steps.cpv.outputs.committed-version }}"
+        echo "Published version: ${{ steps.cpv.outputs.published-version }}"        
+    - name: Install dependencies
+      if: steps.cpv.outputs.is-new-version == 'true'
+    - uses: actions/cache@v3
+      id: cache
+      with:
+        path: |
+          ~/.npm
+          node_modules
+        key: node-${{ hashFiles('**/package-lock.json') }}'
+    - run: npm ci
+      if: steps.cache.outputs.cache-hit != 'true'
+    - name: build
+      run: npm run build   
