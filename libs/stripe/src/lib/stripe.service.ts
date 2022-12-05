@@ -51,7 +51,6 @@ import {
   CreateWebhookEndpointDto,
   UpdateWebhookEndpointDto,
   BaseSaveResponse,
-  SubscriptionCreateItemDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -59,7 +58,7 @@ import { StripeLogger } from './stripe.logger';
 @Injectable()
 export class StripeService {
   protected stripe: Stripe = new Stripe(this.config.apiKey, {
-    apiVersion: '2020-08-27'
+    apiVersion: '2022-11-15'
   });
 
   constructor(
