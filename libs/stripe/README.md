@@ -1,6 +1,6 @@
 <p align="center">
   <h3 align="center">
-    @opavlovskyi/nestjs-stripe
+    @valor/nestjs-stripe
   </h3>
 
   <p align="center">
@@ -28,16 +28,16 @@ do any extra work outside of the initial setup.
 ## Installation
 
 ```bash
-npm install --save @opavlovskyi/nestjs-stripe
+npm install --save @valor/nestjs-stripe
 ```
 
 ## Getting Started
 
-To use `@opavlovskyi/nestjs-stripe` import `StripeModule`
+To use `@valor/nestjs-stripe` import `StripeModule`
 
 ```typescript
 import { Module } from '@nestjs-common';
-import { StripeModule } from '@opavlovskyi/nestjs-stripe';
+import { StripeModule } from '@valor/nestjs-stripe';
 
 @Module({
   imports: [
