@@ -1,9 +1,6 @@
-name: pull_request_to_main
+name: pull request to main
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  pull_request
 
 jobs:
   cache:
