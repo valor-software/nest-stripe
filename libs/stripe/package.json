@@ -1,11 +1,11 @@
 {
-  "name": "@opavlovskyi/nest-stripe",
-  "version": "0.0.6",
+  "name": "@valor/nestjs-stripe",
+  "version": "0.0.0",
   "type": "commonjs",
   "private": false,
   "author": "opavlovskyi-valor-software",
   "license": "ISC",
-  "description": "Stripe service with DTO's and swagger for nestjs projects. Include Webhooks listeners and Event enums.",
+  "description": "Stripe service with DTO's and Swagger for nestjs projects. Include Webhooks listeners and Event enums.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/valor-software/nest-stripe.git"
@@ -14,7 +14,7 @@
     "nestjs",
     "stripe"
   ],
-  "author": "oleksandr.pavlovskyi",
+  "author": "opavlovskyi-valor-software",
   "bugs": {
     "url": "https://github.com/valor-software/nest-stripe/issues"
   },
