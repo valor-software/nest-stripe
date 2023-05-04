@@ -51,6 +51,11 @@ import {
   CreateWebhookEndpointDto,
   UpdateWebhookEndpointDto,
   BaseSaveResponse,
+  UpcomingInvoiceDto,
+  SubscriptionScheduleDto,
+  CreateSubscriptionScheduleDto,
+  SchedulePhaseDto,
+  UpdateSubscriptionScheduleDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -690,14 +695,12 @@ export class StripeService {
 
   async updateSubscription(subscriptionId: string, dto: UpdateSubscriptionDto): Promise<SubscriptionResponse> {
     try {
-      const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
-      const firstSubscriptionItem = subscription.items.data[0];
-      await this.stripe.subscriptions.update(subscriptionId, {
-        items: dto.items?.map((e, i) => ({
-          id: i === 0 ? firstSubscriptionItem?.id : subscription.items.data.find(si => si.price.id === e.priceId)?.id,
-          price: e.priceId,
-          plan: e.planId,
-          quantity: e.quantity
+      const subscription = await this.stripe.subscriptions.update(subscriptionId, {
+        items: dto.items?.map(i => ({
+          id: i.id,
+          price: i.priceId,
+          plan: i.planId,
+          quantity: i.quantity
         })),
         add_invoice_items: dto.addInvoiceItems?.map(i => ({
           price: i.priceId,
@@ -746,6 +749,7 @@ export class StripeService {
         promotion_code: dto.promotionCode,
         trial_end: dto.trialEnd,
         trial_from_plan: dto.trialFromPlan,
+        proration_behavior: dto.prorationBehavior,
         proration_date: dto.prorationDate ? Math.floor(dto.prorationDate.valueOf() / 1000) : undefined,
         expand: ['latest_invoice.payment_intent']
       });
@@ -819,7 +823,7 @@ export class StripeService {
         data: this.subscriptionToDto(subscription)
       }
     } catch (exception) {
-      return this.handleError(exception, 'Customer Subscription list');
+      return this.handleError(exception, 'Get Subscription by ID');
     }
   }
 
@@ -862,7 +866,6 @@ export class StripeService {
     }
   }
 
-  
   //#endregion
 
   //#region Usage Record
@@ -899,20 +902,27 @@ export class StripeService {
   async upcomingInvoicePreview(dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
     try {
       const subscription = await this.stripe.subscriptions.retrieve(dto.subscriptionId);
-      const items = dto.prices?.map((i, idx) => ({
-        id: subscription.items.data[idx]?.id,
+      const subscription_items = dto.prices?.map((i) => ({
+        id: i.id || subscription.items.data.find(x => x.price.id === i.priceId)?.id,
         price: i.priceId,
         quantity: i.quantity
       } as Stripe.InvoiceRetrieveUpcomingParams.SubscriptionItem));
+      const invoice_items = dto.prices?.map((i) => ({
+        invoiceitem: i.id,
+        price: i.priceId,
+        quantity: i.quantity
+      } as Stripe.InvoiceRetrieveUpcomingParams.InvoiceItem));
       const invoice = await this.stripe.invoices.retrieveUpcoming({
         customer: dto.customerId,
         subscription: dto.subscriptionId,
-        subscription_items: items,
+        subscription_items,
+        //invoice_items,
+        subscription_proration_behavior: dto.prorationBehavior,
         subscription_proration_date: dto.prorationDate ? Math.floor(dto.prorationDate.valueOf() / 1000) :  Math.floor(Date.now() / 1000)
       })
       return {
         success: true,
-        invoice: this.invoiceToDto(invoice),
+        invoice: this.upcomingInvoiceToDto(invoice),
       }
     } catch (exception) {
       return this.handleError(exception, 'Invoice Preview');
@@ -1084,6 +1094,98 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Get Customer Quotes');
+    }
+  }
+  //#endregion
+
+  //#region Subscription Schedule
+  async getSubscriptionScheduleById(scheduleId: string): Promise<BaseDataResponse<SubscriptionScheduleDto>> {
+    try {
+      const schedule = await this.stripe.subscriptionSchedules.retrieve(scheduleId);
+      return {
+        success: true,
+        data: this.subscriptionScheduleToDto(schedule)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Subscription Schedule by ID');
+    }
+  }
+
+  async releaseSubscriptionSchedule(scheduleId: string): Promise<BaseDataResponse<SubscriptionScheduleDto>> {
+    try {
+      const schedule = await this.stripe.subscriptionSchedules.release(scheduleId);
+      
+      return {
+        success: true,
+        data: this.subscriptionScheduleToDto(schedule),
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Release Subscription Schedule');
+    }
+  }
+
+  async createSubscriptionSchedule(dto: CreateSubscriptionScheduleDto): Promise<BaseDataResponse<SubscriptionScheduleDto>> {
+    try {
+      const schedule = await this.stripe.subscriptionSchedules.create({
+        customer: dto.customerId,
+        end_behavior: dto.endBehavior,
+        default_settings: dto.defaultSettings,
+        from_subscription: dto.fromSubscription,
+        metadata: dto.metadata,
+        phases: dto.phases?.map(p => ({
+          billing_cycle_anchor: p.billingCycleAnchor,
+          currency: p.currency,
+          default_payment_method: p.defaultPaymentMethod,
+          description: p.description,
+          end_date: p.endDate,
+          items: p.items?.map(i => ({
+            price: i.priceId,
+            plan: i.planId,
+            quantity: i.quantity
+          })),
+          proration_behavior: p.prorationBehavior,
+          start_date: p.startDate
+        })),
+        start_date: dto.startDate
+      });
+      
+      return {
+        success: true,
+        data: this.subscriptionScheduleToDto(schedule),
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Subscription Schedule');
+    }
+  }
+
+  async updateSubscriptionSchedule(id: string, dto: UpdateSubscriptionScheduleDto): Promise<BaseDataResponse<SubscriptionScheduleDto>> {
+    try {
+      const schedule = await this.stripe.subscriptionSchedules.update(id, {
+        end_behavior: dto.endBehavior,
+        default_settings: dto.defaultSettings,
+        metadata: dto.metadata,
+        phases: dto.phases?.map(p => ({
+          billing_cycle_anchor: p.billingCycleAnchor,
+          currency: p.currency,
+          default_payment_method: p.defaultPaymentMethod,
+          description: p.description,
+          end_date: p.endDate,
+          items: p.items?.map(i => ({
+            price: i.priceId,
+            plan: i.planId,
+            quantity: i.quantity
+          })),
+          proration_behavior: p.prorationBehavior,
+          start_date: p.startDate
+        })),
+      });
+      
+      return {
+        success: true,
+        data: this.subscriptionScheduleToDto(schedule),
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Update Subscription Schedule');
     }
   }
   //#endregion
@@ -1304,7 +1406,7 @@ export class StripeService {
       discountAmounts: item.discount_amounts,
       discountable: item.discountable,
       discounts: item.discounts,
-      invoiceItem: item.invoice_item,
+      invoiceItem: item.invoice_item as string,
       liveMode: item.livemode,
       metadata: item.metadata,
       period: item.period,
@@ -1318,8 +1420,8 @@ export class StripeService {
         } : undefined
       } : null,
       quantity: item.quantity,
-      subscription: item.subscription,
-      subscriptionItem: item.subscription_item,
+      subscription: item.subscription as string,
+      subscriptionItem: stripeObjId(item.subscription_item),
       taxAmounts: item.tax_amounts?.map(t => ({
         amount: t.amount,
         inclusive: t.inclusive,
@@ -1387,6 +1489,125 @@ export class StripeService {
     );
     return {
       id: invoice.id,
+      accountCountry: invoice.account_country,
+      accountName: invoice.account_name,
+      accountTaxIds: invoice.account_tax_ids,
+      amountDue: invoice.amount_due,
+      amountPaid: invoice.amount_paid,
+      amountRemaining: invoice.amount_remaining,
+      application: invoice.application,
+      applicationFeeAmount: invoice.application_fee_amount,
+      attemptCount: invoice.attempt_count,
+      attempted: invoice.attempted,
+      autoAdvance: invoice.auto_advance,
+      automaticTax: invoice.automatic_tax,
+      billingReason: invoice.billing_reason,
+      charge: invoice.charge,
+      collectionMethod: invoice.collection_method,
+      created: invoice.created,
+      currency: invoice.currency,
+      customer: invoice.customer,
+      customFields: invoice.custom_fields,
+      customerAddress: this.addressToDto(invoice.customer_address),
+      customerEmail: invoice.customer_email,
+      customerName: invoice.customer_name,
+      customerPhone: invoice.customer_phone,
+      customerShipping: invoice.customer_shipping ? {
+        address: this.addressToDto(invoice.customer_shipping.address),
+        carrier: invoice.customer_shipping.carrier,
+        name: invoice.customer_shipping.name,
+        phone: invoice.customer_shipping.phone,
+        trackingNumber: invoice.customer_shipping.tracking_number
+      } : undefined,
+      customerTaxExempt: invoice.customer_tax_exempt,
+      customerTaxIds: invoice.customer_tax_ids,
+      defaultPaymentMethod: invoice.default_payment_method,
+      defaultSource: invoice.default_source,
+      defaultTaxRates: invoice.default_tax_rates,
+      description: invoice.description,
+      discount: invoice.discount,
+      discounts: invoice.discounts,
+      dueDate: invoice.due_date,
+      endingBalance: invoice.ending_balance,
+      footer: invoice.footer,
+      hostedInvoiceUrl: invoice.hosted_invoice_url,
+      invoicePdf: invoice.invoice_pdf,
+      lastFinalizationError: invoice.last_finalization_error,
+      lines: invoice.lines?.data?.map(i => this.invoiceLineItemToDto(i)),
+      liveMode: invoice.livemode,
+      metadata: invoice.metadata,
+      nextPaymentAttempt: invoice.next_payment_attempt,
+      number: invoice.number,
+      onBehalfOf: invoice.on_behalf_of,
+      object: invoice.object,
+      paid: invoice.paid,
+      paidOutOfBand: invoice.paid_out_of_band,
+      paymentIntent: invoice.payment_intent,
+      paymentSettings: invoice.payment_settings ? {
+        paymentMethodOptions: {
+          acssDebit: invoice.payment_settings.payment_method_options?.acss_debit,
+          bancontact: invoice.payment_settings.payment_method_options?.bancontact,
+          card: invoice.payment_settings.payment_method_options?.card,
+          customerBalance: invoice.payment_settings.payment_method_options?.customer_balance,
+          konbini: invoice.payment_settings.payment_method_options?.konbini,
+          usBankAccount: invoice.payment_settings.payment_method_options?.us_bank_account
+        },
+        paymentMethodTypes: invoice.payment_settings.payment_method_types
+      } : undefined,
+      periodEnd: invoice.period_end,
+      periodStart: invoice.period_start,
+      postPaymentCreditNotesAmount: invoice.post_payment_credit_notes_amount,
+      prePaymentCreditNotesAmount: invoice.pre_payment_credit_notes_amount,
+      quote,
+      receiptNumber: invoice.receipt_number,
+      renderingOptions: invoice.rendering_options ? {
+        amountTaxDisplay: invoice.rendering_options.amount_tax_display
+      } : null,
+      startingBalance: invoice.starting_balance,
+      statementDescriptor: invoice.statement_descriptor,
+      status: invoice.status,
+      statusTransitions: invoice.status_transitions ? {
+        finalizedAt: invoice.status_transitions.finalized_at,
+        markedUncollectibleAt: invoice.status_transitions.marked_uncollectible_at,
+        paidAt: invoice.status_transitions.paid_at,
+        voidedAt: invoice.status_transitions.voided_at
+      } : null,
+      subscription,
+      subtotal: invoice.subtotal,
+      subtotalExcludingTax: invoice.subtotal_excluding_tax,
+      subscriptionProrationDate: invoice.subscription_proration_date,
+      tax: invoice.tax,
+      testClock: invoice.test_clock,
+      thresholdReason: invoice.threshold_reason ? {
+        amountGte: invoice.threshold_reason.amount_gte,
+        itemReasons: invoice.threshold_reason.item_reasons?.map(i => ({
+          lineItemIds: i.line_item_ids,
+          usageGte: i.usage_gte
+        }))
+      } : null,
+      total: invoice.total,
+      totalDiscountAmounts: invoice.total_discount_amounts,
+      totalExcludingTax: invoice.total_excluding_tax,
+      totalTaxAmounts: invoice.total_tax_amounts?.map(i => ({
+        amount: i.amount,
+        inclusive: i.inclusive,
+        taxRate: i.tax_rate
+      })),
+      transferData: invoice.transfer_data,
+      webhooksDeliveredAt: invoice.webhooks_delivered_at
+    };
+  }
+
+  private upcomingInvoiceToDto(invoice: Stripe.UpcomingInvoice): UpcomingInvoiceDto {
+    const subscription = this.getIdOrDtoFieldValue(
+      invoice.subscription,
+      v => this.subscriptionToDto(v)
+    );
+    const quote = this.getIdOrDtoFieldValue(
+      invoice.quote,
+      v => this.quoteToDto(v)
+    );
+    return {
       accountCountry: invoice.account_country,
       accountName: invoice.account_name,
       accountTaxIds: invoice.account_tax_ids,
@@ -1621,6 +1842,41 @@ export class StripeService {
     }
   }
 
+  private subscriptionScheduleToDto(item: Stripe.SubscriptionSchedule): SubscriptionScheduleDto {
+    return {
+      id: item.id,
+      object: item.object,
+      created: item.created,
+      metadata: item.metadata,
+      canceledAt: item.canceled_at,
+      completedAt: item.completed_at,
+      currentPhase: item.current_phase ? {
+        end: item.current_phase.end_date,
+        start: item.current_phase.start_date
+      } : undefined,
+      customerId: stripeObjId(item.customer),
+      endBehavior: item.end_behavior,
+      releasedAt: item.released_at,
+      releasedSubscriptionId: item.released_subscription,
+      status: item.status,
+      subscriptionId: stripeObjId(item.subscription),
+      phases: item.phases?.map(p => ({
+        billingCycleAnchor: p.billing_cycle_anchor,
+        currency: p.currency,
+        defaultPaymentMethod: p.default_payment_method,
+        description: p.description,
+        endDate: p.end_date,
+        items: p.items?.map(i => ({
+          planId: stripeObjId(i.plan),
+          priceId: stripeObjId(i.price),
+          quantity: i.quantity
+        })),
+        prorationBehavior: p.proration_behavior,
+        startDate: p.start_date,
+      } as SchedulePhaseDto))
+    }
+  }
+
   private paymentIntentToDto(pi: Stripe.PaymentIntent): PaymentIntentDto {
     return {
       id: pi.id,
@@ -1816,4 +2072,9 @@ export class StripeService {
       state: dto.state
     } : undefined;
   }
+}
+
+
+function stripeObjId(obj: {id: string} | string): string {
+  return typeof obj === 'string' ? obj : obj?.id || (obj as unknown as string);
 }

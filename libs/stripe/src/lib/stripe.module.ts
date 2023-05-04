@@ -6,8 +6,36 @@ import { StripeLogger } from './stripe.logger';
 import { StripeService } from './stripe.service';
 import { WebhookController } from './webhook/webhook.controller';
 import { WebhookService } from './webhook/webhook.service';
+import {
+  CheckoutSessionController,
+  CustomerController,
+  PaymentIntentController,
+  PaymentMethodController,
+  PriceController,
+  ProductController,
+  SubscriptionController,
+  InvoiceController,
+  UsageRecordController,
+  QuotesController,
+  SubscriptionScheduleController,
+} from './controllers';
 
-const controllerList = [StripeController, WebhookController];
+const controllerList = [
+  PaymentIntentController,
+  CheckoutSessionController,
+  CustomerController,
+  PaymentMethodController,
+  PriceController,
+  ProductController,
+  SubscriptionController,
+  SubscriptionScheduleController,
+  InvoiceController,
+  UsageRecordController,
+  QuotesController,
+
+  StripeController,
+  WebhookController
+];
 const providerList = [StripeService, StripeLogger, WebhookService];
 const exportList = [StripeService, WebhookService];
 
@@ -19,10 +47,12 @@ export interface StripeConfigFactory {
 
 export interface StripeConfigAsyncOptions
   extends Pick<ModuleMetadata, 'imports'> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inject?: any[];
   useExisting?: Type<StripeConfigFactory>;
   useClass?: Type<StripeConfigFactory>;
   useFactory?: (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...args: any[]
   ) => Promise<StripeConfig> | StripeConfig;
 }
