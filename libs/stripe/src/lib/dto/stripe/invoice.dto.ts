@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
 import { BaseDto } from '../base.dto';
-import { AddressDto, AutomaticTaxDto, CustomFieldDto, TaxAmountDto, TaxRates } from '../shared.dto';
+import { AddressDto, AutomaticTaxDto, CustomFieldDto, TaxAmountDto } from '../shared.dto';
 import { InvoiceLineItemDto } from './invoice-line-item.dto';
 import { QuoteDto } from './quote.dto';
 import { SubscriptionDto } from './subscription.dto';
@@ -233,6 +233,240 @@ export class InvoiceTransferDataDto {
 }
 
 export class InvoiceDto extends BaseDto {
+  @ApiProperty()
+  accountCountry: string | null;
+
+  @ApiProperty()
+  accountName: string | null;
+
+  @ApiProperty()
+  accountTaxIds: Array<string | Stripe.TaxId | Stripe.DeletedTaxId> | null;
+
+  @ApiProperty()
+  amountDue: number;
+
+  @ApiProperty()
+  amountPaid: number;
+
+  @ApiProperty()
+  amountRemaining: number;
+
+  @ApiProperty()
+  application: string | Stripe.Application | Stripe.DeletedApplication | null;
+
+  @ApiProperty()
+  applicationFeeAmount: number | null;
+
+  @ApiProperty()
+  attemptCount: number;
+
+  @ApiProperty({
+    description: 'Whether an attempt has been made to pay the invoice. An invoice is not attempted until 1 hour after the `invoice.created` webhook, for example, so you might not want to display that invoice as unpaid to your users.'
+  })
+  attempted: boolean;
+
+  @ApiProperty({
+    description: 'Controls whether Stripe will perform [automatic collection](https://stripe.com/docs/billing/invoices/workflow/#auto_advance) of the invoice. When `false`, the invoice\'s state will not automatically advance without an explicit action.'
+  })
+  autoAdvance: boolean;
+
+  @ApiProperty()
+  automaticTax: AutomaticTaxDto;
+
+  @ApiProperty({
+    enum: [BillingReasons]
+  })
+  billingReason: Stripe.Invoice.BillingReason | null;
+
+  @ApiProperty()
+  charge: string | Stripe.Charge | null;
+
+  @ApiProperty({
+    enum: ['charge_automatically', 'send_invoice']
+  })
+  collectionMethod: Stripe.Invoice.CollectionMethod;
+
+  @ApiProperty()
+  currency: string;
+
+  @ApiProperty({ isArray: true, type: CustomFieldDto })
+  customFields: Array<CustomFieldDto> | null;
+
+  @ApiProperty()
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
+
+  @ApiProperty()
+  customerAddress: AddressDto | null;
+
+  @ApiProperty()
+  customerEmail: string | null;
+
+  @ApiProperty()
+  customerName: string | null;
+
+  @ApiProperty()
+  customerPhone: string | null;
+
+  @ApiProperty()
+  customerShipping: InvoiceCustomerShippingDto | null;
+
+  @ApiProperty({
+    enum: ['exempt', 'none', 'reverse']
+  })
+  customerTaxExempt: Stripe.Invoice.CustomerTaxExempt | null;
+
+  @ApiProperty({ isArray: true, type: CustomerTaxIdDto })
+  customerTaxIds: Array<CustomerTaxIdDto> | null;
+
+  @ApiProperty()
+  defaultPaymentMethod: string | Stripe.PaymentMethod | null;
+
+  @ApiProperty()
+  defaultSource: string | Stripe.CustomerSource | null;
+
+  @ApiProperty()
+  defaultTaxRates: Array<Stripe.TaxRate>;
+
+  @ApiProperty()
+  description: string | null;
+
+  @ApiProperty()
+  discount: Stripe.Discount | null;
+
+  @ApiProperty()
+  discounts: Array<string | Stripe.Discount | Stripe.DeletedDiscount> | null;
+
+  @ApiProperty()
+  dueDate: number | null;
+
+  @ApiProperty()
+  endingBalance: number | null;
+
+  @ApiProperty()
+  footer: string | null;
+
+  @ApiProperty()
+  hostedInvoiceUrl?: string | null;
+
+  @ApiProperty()
+  invoicePdf?: string | null;
+
+  @ApiProperty()
+  lastFinalizationError: Stripe.Invoice.LastFinalizationError | null;
+
+  @ApiProperty({ isArray: true, type: InvoiceLineItemDto })
+  lines: Array<InvoiceLineItemDto>;
+
+  @ApiProperty()
+  nextPaymentAttempt: number | null;
+
+  @ApiProperty()
+  number: string | null;
+
+  @ApiProperty()
+  onBehalfOf: string | Stripe.Account | null;
+
+  @ApiProperty()
+  paid: boolean;
+
+  @ApiProperty()
+  paidOutOfBand: boolean;
+
+  @ApiProperty()
+  paymentIntent: string | Stripe.PaymentIntent | null;
+
+  @ApiProperty()
+  paymentSettings: InvoicePaymentSettingsDto;
+
+  @ApiProperty()
+  periodEnd: number;
+
+  @ApiProperty()
+  periodStart: number;
+
+  @ApiProperty()
+  postPaymentCreditNotesAmount: number;
+
+  @ApiProperty()
+  prePaymentCreditNotesAmount: number;
+
+  @ApiProperty()
+  quote: string | QuoteDto| null;
+
+  @ApiProperty()
+  receiptNumber: string | null;
+
+  @ApiProperty()
+  renderingOptions: InvoiceRenderingOptionsDto | null;
+
+  @ApiProperty()
+  startingBalance: number;
+
+  @ApiProperty()
+  statementDescriptor: string | null;
+
+  @ApiProperty({ enum: ['deleted', 'draft', 'open', 'paid', 'uncollectible', 'void']})
+  status: 'deleted' | 'draft' | 'open' | 'paid' | 'uncollectible' | 'void' | null;
+
+  @ApiProperty()
+  statusTransitions: InvoiceStatusTransitionsDto;
+
+  @ApiProperty()
+  subscription: string | SubscriptionDto | null;
+
+  @ApiProperty()
+  subscriptionProrationDate?: number;
+
+  @ApiProperty()
+  subtotal: number;
+
+  @ApiProperty()
+  subtotalExcludingTax: number | null;
+
+  @ApiProperty()
+  tax: number | null;
+
+  @ApiProperty({ enum: ['advancing', 'internal_failure', 'ready']})
+  testClock: string | Stripe.TestHelpers.TestClock | null;
+
+  @ApiProperty()
+  thresholdReason?: InvoiceThresholdReasonDto;
+
+  @ApiProperty()
+  total: number;
+
+  @ApiProperty({ isArray: true, type: InvoiceTotalDiscountAmountDto })
+  totalDiscountAmounts: Array<InvoiceTotalDiscountAmountDto> | null;
+
+  @ApiProperty()
+  totalExcludingTax: number | null;
+
+  @ApiProperty({ isArray: true, type: TaxAmountDto })
+  totalTaxAmounts: Array<TaxAmountDto>;
+
+  @ApiProperty()
+  transferData: InvoiceTransferDataDto | null;
+
+  @ApiProperty()
+  webhooksDeliveredAt: number | null;
+
+}
+
+export class UpcomingInvoiceDto {
+  @ApiPropertyOptional({
+    description: 'Time at which the object was created. Measured in seconds since the Unix epoch.'
+  })
+  created?: number;
+
+  @ApiProperty()
+  liveMode?: boolean;
+
+  @ApiPropertyOptional()
+  metadata?: {[name: string]: string | number | null};
+
+  @ApiProperty()
+  object: string;
+
   @ApiProperty()
   accountCountry: string | null;
 

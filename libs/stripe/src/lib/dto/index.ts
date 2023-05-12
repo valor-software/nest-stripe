@@ -24,6 +24,7 @@ export * from './save-webhook-endpoint.dto';
 export * from './stripe/customer.dto';
 export * from './stripe/subscription-item.dto';
 export * from './stripe/subscription.dto';
+export * from './subscription-schedule.dto';
 export * from './stripe/invoice-line-item.dto';
 export * from './stripe/invoice.dto';
 export * from './stripe/usage-record.dto';

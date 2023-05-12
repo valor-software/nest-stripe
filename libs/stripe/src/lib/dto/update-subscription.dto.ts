@@ -1,10 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsBoolean,
   IsDate,
   IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
@@ -327,6 +326,14 @@ export class UpdateSubscriptionDto {
   @IsOptional()
   @IsNumber()
   trialPeriodDays?: number;
+
+  @ApiPropertyOptional({
+    enum: ['always_invoice', 'create_prorations', 'none'],
+    description: `Determines how to handle [prorations](https://stripe.com/docs/subscriptions/billing-cycle#prorations) when the billing cycle changes (e.g., when switching plans, resetting \`billing_cycle_anchor=now\`, or starting a trial), or if an item's \`quantity\` changes. The default value is \`create_prorations\`.`,
+  })
+  @IsOptional()
+  @IsEnum(['always_invoice', 'create_prorations', 'none'])
+  prorationBehavior?: Stripe.SubscriptionUpdateParams.ProrationBehavior;
 
   @ApiPropertyOptional()
   @IsOptional()
