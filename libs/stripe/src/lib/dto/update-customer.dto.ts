@@ -22,7 +22,7 @@ export class UpdateCustomerDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsNotEmptyObject()
-  address: AddressDto;
+  address?: AddressDto;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -32,7 +32,7 @@ export class UpdateCustomerDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -51,10 +51,10 @@ export class UpdateCustomerDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @ApiPropertyOptional()
-  metadata: {[name: string]: string |  number | null};
+  metadata?: {[name: string]: string |  number | null};
 
   @ApiPropertyOptional({
     type: 'string',
