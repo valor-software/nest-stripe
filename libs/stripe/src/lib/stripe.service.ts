@@ -761,7 +761,8 @@ export class StripeService {
         status: subscription.status,
         clientSecret: paymentIntent?.client_secret,
         paymentIntentStatus: paymentIntent?.status,
-        latestInvoiceId: paymentIntent?.id
+        latestInvoiceId: invoice?.id,
+        paymentIntentId: paymentIntent?.id
       }
     } catch (exception) {
       return this.handleError(exception, 'Update Subscription');
@@ -938,6 +939,20 @@ export class StripeService {
       };
     } catch (exception) {
       return this.handleError(exception, 'Get Invoice');
+    }
+  }
+
+  async customerInvoices(customerId: string): Promise<BaseDataResponse<InvoiceDto[]>> {
+    try {
+      const invoices = await this.stripe.invoices.list({
+        customer: customerId,
+      });
+      return {
+        success: true,
+        data: invoices.data?.map(i => this.invoiceToDto(i))
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Customer Subscription list');
     }
   }
   //#endregion
