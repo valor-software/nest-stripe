@@ -21,4 +21,7 @@ export class SubscriptionResponse extends BaseResponse {
 
   @ApiPropertyOptional()
   latestInvoiceId?: string;
+
+  @ApiPropertyOptional()
+  paymentIntentId?: string;
 }

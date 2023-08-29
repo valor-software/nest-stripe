@@ -15,6 +15,7 @@ import {
   CreateCustomerDto,
   CustomerDto,
   CustomerResponse,
+  InvoiceDto,
   PaymentMethodDto,
   PaymentMethodTypes,
   SubscriptionsResponse,
@@ -78,6 +79,12 @@ export class CustomerController {
   @Get(':customerId/subscriptions')
   customerSubscriptions(@Param('customerId') customerId: string): Promise<SubscriptionsResponse> {
     return this.stripeService.customerSubscriptions(customerId);
+  }
+
+  @ApiResponse({ type: BaseDataResponse<InvoiceDto[]> })
+  @Get(':customerId/invoices')
+  customerInvoices(@Param('customerId') customerId: string): Promise<BaseDataResponse<InvoiceDto[]>> {
+    return this.stripeService.customerInvoices(customerId);
   }
 
   @ApiResponse({ type: BaseDataResponse })
