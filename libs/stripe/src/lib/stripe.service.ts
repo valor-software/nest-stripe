@@ -186,7 +186,8 @@ export class StripeService {
           address: this.addressFromDto(dto.shipping.address),
           phone: dto.shipping.phone
         } : undefined,
-        tax_exempt: dto.taxExempt
+        tax_exempt: dto.taxExempt,
+        test_clock: dto.testClock
       });
       return { customerId: customer.id, success: true };
     } catch (exception) {
