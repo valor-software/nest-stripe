@@ -96,4 +96,9 @@ export class CreateCustomerDto {
   @IsOptional()
   @IsEnum(['exempt', 'none', 'reverse'])
   taxExempt?: 'exempt' | 'none' | 'reverse';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  testClock?: string;
 }
