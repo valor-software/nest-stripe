@@ -1,7 +1,35 @@
-import { BadRequestException, Body, Controller, Delete, Get, Logger, Param, Post, RawBodyRequest, Req, UseFilters, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Logger,
+  Param,
+  Query,
+  Post,
+  RawBodyRequest,
+  Req,
+  UseFilters,
+  UseGuards,
+  UsePipes,
+  ValidationPipe
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiResponse,
+  ApiTags
+} from '@nestjs/swagger';
 import { Request } from 'express';
-import { BaseDataResponse, BaseResponse, BaseSaveResponse, CreateWebhookEndpointDto, UpdateWebhookEndpointDto, WebhookEndpointDto } from '../dto';
+import {
+  BaseDataResponse,
+  BaseResponse,
+  BaseSaveResponse,
+  CreateWebhookEndpointDto,
+  ListRequestParamsDto,
+  UpdateWebhookEndpointDto,
+  WebhookEndpointDto
+} from '../dto';
 import { StripeAuthGuard } from '../stripe-auth.guard';
 import { WebhookExceptionFilter } from './webhook.exception.filter';
 import { WebhookResponse } from './webhook.interfaces';
@@ -29,8 +57,8 @@ export class WebhookController {
   @UseGuards(StripeAuthGuard)
   @UsePipes(new ValidationPipe())
   @Get('webhook-endpoints')
-  getWebhookEndpoints(): Promise<BaseDataResponse<WebhookEndpointDto[]>> {
-    return this.webhookService.webhookEndpoints();
+  getWebhookEndpoints(@Query() params?: ListRequestParamsDto): Promise<BaseDataResponse<WebhookEndpointDto[]>> {
+    return this.webhookService.webhookEndpoints(params);
   }
 
   @ApiBearerAuth()

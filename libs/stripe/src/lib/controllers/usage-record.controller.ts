@@ -6,12 +6,14 @@ import {
   Post,
   Body,
   Param,
-  Get} from '@nestjs/common';
+  Get,
+  Query} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
   CreateUsageRecordDto,
-  CreateUsageRecordResponse
+  CreateUsageRecordResponse,
+  ListRequestParamsDto
 } from '../dto';
 import { StripeAuthGuard } from '../stripe-auth.guard';
 import { StripeService } from '../stripe.service';
@@ -37,9 +39,10 @@ export class UsageRecordController {
   @ApiResponse({ type: BaseDataResponse })
   @Get(':subscriptionItemId/usage-record-summaries')
   listUsageRecordSummaries(
-    @Param('subscriptionItemId') subscriptionItemId: string
+    @Param('subscriptionItemId') subscriptionItemId: string,
+    @Query() params?: ListRequestParamsDto,
   ): Promise<BaseDataResponse<Stripe.UsageRecordSummary[]>> {
-    return this.stripeService.listUsageRecordSummaries(subscriptionItemId);
+    return this.stripeService.listUsageRecordSummaries(subscriptionItemId, params);
   }
 
 }

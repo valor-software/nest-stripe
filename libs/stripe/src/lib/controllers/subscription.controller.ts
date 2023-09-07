@@ -6,12 +6,14 @@ import {
   Post,
   Body,
   Param,
-  Get} from '@nestjs/common';
+  Get,
+  Query} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
   CreateSubscriptionDto,
   CreateSubscriptionItemDto,
+  ListRequestParamsDto,
   SubscriptionDto,
   SubscriptionResponse,
   UpdateSubscriptionDto
@@ -71,9 +73,10 @@ export class SubscriptionController {
   @ApiResponse({ type: BaseDataResponse })
   @Get(':subscriptionId/subscription-items')
   listSubscriptionItems(
-    @Param('subscriptionId') subscriptionId: string
+    @Param('subscriptionId') subscriptionId: string,
+    @Query() params?: ListRequestParamsDto,
   ): Promise<BaseDataResponse<Stripe.SubscriptionItem[]>> {
-    return this.stripeService.listSubscriptionItems(subscriptionId);
+    return this.stripeService.listSubscriptionItems(subscriptionId, params);
   }
 
 }

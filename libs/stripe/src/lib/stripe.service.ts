@@ -56,6 +56,7 @@ import {
   CreateSubscriptionScheduleDto,
   SchedulePhaseDto,
   UpdateSubscriptionScheduleDto,
+  ListRequestParamsDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -273,10 +274,15 @@ export class StripeService {
     }
   }
 
-  async customerPaymentMethodList(customerId: string, type: Stripe.PaymentMethodListParams.Type): Promise<BaseDataResponse<PaymentMethodDto[]>> {
+  async customerPaymentMethodList(
+    customerId: string, type: Stripe.PaymentMethodListParams.Type, params?: ListRequestParamsDto
+  ): Promise<BaseDataResponse<PaymentMethodDto[]>> {
     try {
       const paymentMethods = await this.stripe.customers.listPaymentMethods(customerId, {
-        type
+        type,
+        limit: params.limit,
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
       });
       return {
         success: true,
@@ -284,6 +290,23 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Customer Payment Method List');
+    }
+  }
+
+  async customerInvoices(customerId: string, params?: ListRequestParamsDto): Promise<BaseDataResponse<InvoiceDto[]>> {
+    try {
+      const invoices = await this.stripe.invoices.list({
+        customer: customerId,
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
+        limit: params.limit,
+      });
+      return {
+        success: true,
+        data: invoices.data?.map(i => this.invoiceToDto(i))
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Customer Subscription list');
     }
   }
   //#endregion
@@ -465,7 +488,7 @@ export class StripeService {
     }
   }
 
-  async getPriceList(productId?: string): Promise<BaseDataResponse<PriceDto[]>> {
+  async getPriceList(productId?: string, params?: ListRequestParamsDto): Promise<BaseDataResponse<PriceDto[]>> {
     try {
       const expand = ['data.tiers'];
       if (!productId) {
@@ -474,7 +497,10 @@ export class StripeService {
       console.log(expand)
       const prices = await this.stripe.prices.list({
         product: productId,
-        expand
+        expand,
+        limit: params.limit,
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
       });
       return {
         success: true,
@@ -569,9 +595,12 @@ export class StripeService {
     }
   }
 
-  async getProductList(): Promise<BaseDataResponse<ProductDto[]>> {
+  async getProductList(params?: ListRequestParamsDto): Promise<BaseDataResponse<ProductDto[]>> {
     try {
-      const productList = await this.stripe.products.list();
+      const productList = await this.stripe.products.list({
+        limit: params.limit,
+        starting_after: params.startingAfter
+      });
       const products = productList.data.map((p) => this.productToDto(p));
       await Promise.all(products.map(async (p, i) => {
         const prices = await this.getPriceList(p.id);
@@ -842,10 +871,15 @@ export class StripeService {
     }
   }
 
-  async listSubscriptionItems(subscriptionId: string): Promise<BaseDataResponse<Stripe.SubscriptionItem[]>> {
+  async listSubscriptionItems(
+    subscriptionId: string, params?: ListRequestParamsDto
+  ): Promise<BaseDataResponse<Stripe.SubscriptionItem[]>> {
     try {
       const subscriptionItems = await this.stripe.subscriptionItems.list({
-        subscription: subscriptionId
+        subscription: subscriptionId,
+        limit: params.limit,
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
       })
       return {
         success: true,
@@ -887,9 +921,15 @@ export class StripeService {
     }
   }
 
-  async listUsageRecordSummaries(subscriptionItemId: string): Promise<BaseDataResponse<Stripe.UsageRecordSummary[]>> {
+  async listUsageRecordSummaries(
+    subscriptionItemId: string, params?: ListRequestParamsDto
+  ): Promise<BaseDataResponse<Stripe.UsageRecordSummary[]>> {
     try {
-      const usageRecordSummaries = await this.stripe.subscriptionItems.listUsageRecordSummaries(subscriptionItemId)
+      const usageRecordSummaries = await this.stripe.subscriptionItems.listUsageRecordSummaries(subscriptionItemId, {
+        limit: params.limit,
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
+      })
       return {
         success: true,
         data: usageRecordSummaries.data
@@ -940,20 +980,6 @@ export class StripeService {
       };
     } catch (exception) {
       return this.handleError(exception, 'Get Invoice');
-    }
-  }
-
-  async customerInvoices(customerId: string): Promise<BaseDataResponse<InvoiceDto[]>> {
-    try {
-      const invoices = await this.stripe.invoices.list({
-        customer: customerId,
-      });
-      return {
-        success: true,
-        data: invoices.data?.map(i => this.invoiceToDto(i))
-      }
-    } catch (exception) {
-      return this.handleError(exception, 'Customer Subscription list');
     }
   }
   //#endregion
@@ -1098,11 +1124,16 @@ export class StripeService {
     }
   }
 
-  async customerQuoteList(customerId: string, status?: Stripe.Quote.Status): Promise<BaseDataResponse<QuoteDto[]>> {
+  async customerQuoteList(
+    customerId: string, status?: Stripe.Quote.Status, params?: ListRequestParamsDto
+  ): Promise<BaseDataResponse<QuoteDto[]>> {
     try {
       const quotes = await this.stripe.quotes.list({
         customer: customerId,
-        status
+        status,
+        limit: params.limit,
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
       });
       return {
         success: true,
@@ -1212,9 +1243,13 @@ export class StripeService {
     return this.stripe.webhooks.constructEventAsync(payload, headerSignature, this.config.webHookSignature);
   }
 
-  async webhookEndpoints(): Promise<BaseDataResponse<WebhookEndpointDto[]>> {
+  async webhookEndpoints(params?: ListRequestParamsDto): Promise<BaseDataResponse<WebhookEndpointDto[]>> {
     try {
-      const webhookEndpoints = await this.stripe.webhookEndpoints.list();
+      const webhookEndpoints = await this.stripe.webhookEndpoints.list({
+        limit: params.limit,
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
+      });
       return {
         success: true,
         data: webhookEndpoints.data?.map(w => this.webhookEndpointToDto(w))
