@@ -2,7 +2,15 @@ import { Injectable, RawBodyRequest } from '@nestjs/common';
 import { Request } from 'express';
 import { filter, Observable, Subject } from 'rxjs';
 import Stripe from 'stripe';
-import { BaseDataResponse, BaseResponse, BaseSaveResponse, CreateWebhookEndpointDto, UpdateWebhookEndpointDto, WebhookEndpointDto } from '../dto';
+import {
+  BaseDataResponse,
+  BaseResponse,
+  BaseSaveResponse,
+  CreateWebhookEndpointDto,
+  ListRequestParamsDto,
+  UpdateWebhookEndpointDto,
+  WebhookEndpointDto
+} from '../dto';
 import { StripeService } from '../stripe.service';
 import { WebhookEventType } from './event-types.enum';
 
@@ -32,8 +40,8 @@ export class WebhookService {
     );
   }
 
-  webhookEndpoints(): Promise<BaseDataResponse<WebhookEndpointDto[]>>  {
-    return this.stripeService.webhookEndpoints();
+  webhookEndpoints(params?: ListRequestParamsDto): Promise<BaseDataResponse<WebhookEndpointDto[]>>  {
+    return this.stripeService.webhookEndpoints(params);
   }
 
   webhookEndpointById(webhookEndpointId: string): Promise<BaseDataResponse<WebhookEndpointDto>> {

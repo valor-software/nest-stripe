@@ -16,6 +16,7 @@ import {
   CustomerDto,
   CustomerResponse,
   InvoiceDto,
+  ListRequestParamsDto,
   PaymentMethodDto,
   PaymentMethodTypes,
   SubscriptionsResponse,
@@ -83,8 +84,11 @@ export class CustomerController {
 
   @ApiResponse({ type: BaseDataResponse<InvoiceDto[]> })
   @Get(':customerId/invoices')
-  customerInvoices(@Param('customerId') customerId: string): Promise<BaseDataResponse<InvoiceDto[]>> {
-    return this.stripeService.customerInvoices(customerId);
+  customerInvoices(
+    @Param('customerId') customerId: string,
+    @Query() params: ListRequestParamsDto,
+  ): Promise<BaseDataResponse<InvoiceDto[]>> {
+    return this.stripeService.customerInvoices(customerId, params);
   }
 
   @ApiResponse({ type: BaseDataResponse })
@@ -95,8 +99,12 @@ export class CustomerController {
   @Get(':customerId/payment-method-list')
   customerPaymentMethodList(
     @Param('customerId') customerId: string,
-    @Query('type') type: Stripe.PaymentMethodListParams.Type): Promise<BaseDataResponse<PaymentMethodDto[]>> {
-    return this.stripeService.customerPaymentMethodList(customerId, type);
+    @Query('type') type: Stripe.PaymentMethodListParams.Type,
+    @Query('limit') limit?: number,
+    @Query('startingAfter') startingAfter?: string,
+    @Query('endingBefore') endingBefore?: string,
+  ): Promise<BaseDataResponse<PaymentMethodDto[]>> {
+    return this.stripeService.customerPaymentMethodList(customerId, type, {limit, startingAfter, endingBefore });
   }
 
   @ApiResponse({ type: SubscriptionsResponse })
@@ -108,8 +116,11 @@ export class CustomerController {
   @Get(':customerId/quotes')
   customerQuotes(
     @Param('customerId') customerId: string,
-    @Query('status') status?: Stripe.Quote.Status
+    @Query('status') status?: Stripe.Quote.Status,
+    @Query('limit') limit?: number,
+    @Query('startingAfter') startingAfter?: string,
+    @Query('endingBefore') endingBefore?: string,
   ): Promise<SubscriptionsResponse> {
-    return this.stripeService.customerQuoteList(customerId, status);
+    return this.stripeService.customerQuoteList(customerId, status, {limit, startingAfter, endingBefore });
   }
 }

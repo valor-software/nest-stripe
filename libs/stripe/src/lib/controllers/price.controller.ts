@@ -6,12 +6,14 @@ import {
   Post,
   Body,
   Param,
-  Get
+  Get,
+  Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
   CreatePriceDto,
+  ListRequestParamsDto,
   PriceDto,
   PriceResponse,
   UpdatePriceDto
@@ -44,8 +46,8 @@ export class PriceController {
 
   @ApiResponse({ type: BaseDataResponse })
   @Get('')
-  priceList(): Promise<BaseDataResponse<PriceDto[]>> {
-    return this.stripeService.getPriceList();
+  priceList(@Query() params?: ListRequestParamsDto): Promise<BaseDataResponse<PriceDto[]>> {
+    return this.stripeService.getPriceList(undefined, params);
   }
 
   @ApiResponse({ type: BaseDataResponse<PriceDto> })

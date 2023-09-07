@@ -7,12 +7,14 @@ import {
   Body,
   Param,
   Get,
-  Delete
+  Delete,
+  Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
   CreateProductDto,
+  ListRequestParamsDto,
   ProductDto,
   ProductResponse,
   UpdateProductDto
@@ -51,8 +53,8 @@ export class ProductController {
 
   @ApiResponse({ type: BaseDataResponse })
   @Get('')
-  productList(): Promise<BaseDataResponse<ProductDto[]>> {
-    return this.stripeService.getProductList();
+  productList(@Query() params?: ListRequestParamsDto): Promise<BaseDataResponse<ProductDto[]>> {
+    return this.stripeService.getProductList(params);
   }
 
   @ApiResponse({ type: BaseDataResponse<ProductDto> })
