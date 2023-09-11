@@ -18,6 +18,7 @@
     "@nestjs/passport": "9.0.3",
     "@nestjs/platform-express": "9.4.0",
     "@nestjs/swagger": "6.3.0",
+    "@nrwl/webpack": "16.0.3",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.0",
     "hbs": "4.2.0",

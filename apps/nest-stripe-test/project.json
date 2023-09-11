@@ -3,13 +3,15 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nrwl/node:webpack",
+      "executor": "@nrwl/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/nest-stripe-test",
         "main": "apps/nest-stripe-test/src/main.ts",
         "tsConfig": "apps/nest-stripe-test/tsconfig.app.json",
-        "assets": ["apps/nest-stripe-test/src/assets"]
+        "assets": ["apps/nest-stripe-test/src/assets"],
+        "target": "node",
+        "compiler": "tsc"
       },
       "configurations": {
         "production": {
