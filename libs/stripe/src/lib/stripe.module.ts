@@ -19,6 +19,7 @@ import {
   QuotesController,
   SubscriptionScheduleController,
 } from './controllers';
+import { TestClocksController } from './controllers/test-clock.controller';
 
 const controllerList = [
   PaymentIntentController,
@@ -32,6 +33,7 @@ const controllerList = [
   InvoiceController,
   UsageRecordController,
   QuotesController,
+  TestClocksController,
 
   StripeController,
   WebhookController

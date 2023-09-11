@@ -57,6 +57,7 @@ import {
   SchedulePhaseDto,
   UpdateSubscriptionScheduleDto,
   ListRequestParamsDto,
+  TestClockDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -286,7 +287,8 @@ export class StripeService {
       });
       return {
         success: true,
-        data: paymentMethods.data.map(pm => this.paymentMethodToDto(pm))
+        data: paymentMethods.data.map(pm => this.paymentMethodToDto(pm)),
+        hasMore: paymentMethods.has_more,
       }
     } catch (exception) {
       return this.handleError(exception, 'Customer Payment Method List');
@@ -303,7 +305,8 @@ export class StripeService {
       });
       return {
         success: true,
-        data: invoices.data?.map(i => this.invoiceToDto(i))
+        data: invoices.data?.map(i => this.invoiceToDto(i)),
+        hasMore: invoices.has_more,
       }
     } catch (exception) {
       return this.handleError(exception, 'Customer Subscription list');
@@ -504,7 +507,8 @@ export class StripeService {
       });
       return {
         success: true,
-        data: prices.data.map((p) => this.priceToDto(p))
+        data: prices.data.map((p) => this.priceToDto(p)),
+        hasMore: prices.has_more,
       };
     } catch (exception) {
       return this.handleError(exception, 'Get Price List');
@@ -608,7 +612,8 @@ export class StripeService {
       }))
       return {
         success: true,
-        data: products
+        data: products,
+        hasMore: productList.has_more,
       };
     } catch (exception) {
       return this.handleError(exception, 'Get Product List');
@@ -883,7 +888,8 @@ export class StripeService {
       })
       return {
         success: true,
-        data: subscriptionItems.data
+        data: subscriptionItems.data,
+        hasMore: subscriptionItems.has_more,
       }
     } catch (exception) {
       return this.handleError(exception, 'List Usage Record Summaries');
@@ -932,7 +938,8 @@ export class StripeService {
       })
       return {
         success: true,
-        data: usageRecordSummaries.data
+        data: usageRecordSummaries.data,
+        hasMore: usageRecordSummaries.has_more,
       }
     } catch (exception) {
       return this.handleError(exception, 'List Usage Record Summaries');
@@ -1137,7 +1144,8 @@ export class StripeService {
       });
       return {
         success: true,
-        data: quotes.data.map(q => this.quoteToDto(q))
+        data: quotes.data.map(q => this.quoteToDto(q)),
+        hasMore: quotes.has_more,
       }
     } catch (exception) {
       return this.handleError(exception, 'Get Customer Quotes');
@@ -1252,7 +1260,8 @@ export class StripeService {
       });
       return {
         success: true,
-        data: webhookEndpoints.data?.map(w => this.webhookEndpointToDto(w))
+        data: webhookEndpoints.data?.map(w => this.webhookEndpointToDto(w)),
+        hasMore: webhookEndpoints.has_more,
       }
     } catch (exception) {
       return this.handleError(exception, 'Get Webhook Endpoints');
@@ -1315,6 +1324,77 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Delete Webhook Endpoint');
+    }
+  }
+  //#endregion
+
+  //#region Test Clocks
+  async createTestClock(frozenTime: number = Date.now(), name = ''): Promise<BaseDataResponse<TestClockDto>> {
+    try {
+      const testClock = await this.stripe.testHelpers.testClocks.create({
+        name,
+        frozen_time: frozenTime
+      })
+      return {
+        success: true,
+        data: this.testClockToDto(testClock)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Create Test Clock');
+    }
+  }
+
+  async advanceTestClock(id: string, frozenTime: number = Date.now(),): Promise<BaseDataResponse<TestClockDto>> {
+    try {
+      const testClock = await this.stripe.testHelpers.testClocks.advance(id, {
+        frozen_time: frozenTime
+      })
+      return {
+        success: true,
+        data: this.testClockToDto(testClock)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Advance Test Clock');
+    }
+  }
+
+  async getTestClockById(id: string): Promise<BaseDataResponse<TestClockDto>> {
+    try {
+      const testClock = await this.stripe.testHelpers.testClocks.retrieve(id)
+      return {
+        success: true,
+        data: this.testClockToDto(testClock),
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Test Clock By Id');
+    }
+  }
+
+  async getTestClockList(params?: ListRequestParamsDto): Promise<BaseDataResponse<TestClockDto[]>> {
+    try {
+      const testClocks = await this.stripe.testHelpers.testClocks.list({
+        starting_after: params.startingAfter,
+        ending_before: params.endingBefore,
+        limit: params.limit
+      })
+      return {
+        success: true,
+        data: testClocks.data.map(testClock => this.testClockToDto(testClock)),
+        hasMore: testClocks.has_more,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Get Test Clock List');
+    }
+  }
+
+  async deleteTestClock(id: string): Promise<BaseResponse> {
+    try {
+      await this.stripe.testHelpers.testClocks.del(id)
+      return {
+        success: true,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Delete Test Clock');
     }
   }
   //#endregion
@@ -2110,6 +2190,19 @@ export class StripeService {
       status: we.status,
       url: we.url
     }
+  }
+
+  private testClockToDto(tc: Stripe.TestHelpers.TestClock): TestClockDto {
+    return {
+      id: tc.id,
+      object: tc.object,
+      created: tc.created,
+      liveMode: tc.livemode,
+      name: tc.name,
+      deletesAfter: tc.deletes_after,
+      frozenTime: tc.deletes_after,
+      status: tc.status
+    } as TestClockDto
   }
   //#endregion
 
