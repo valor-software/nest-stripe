@@ -52,3 +52,4 @@ export * from './product.response';
 export * from './base-save.response';
 
 export * from './list-request-params.dto';
+export * from './base-search.dto';

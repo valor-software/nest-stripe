@@ -58,6 +58,7 @@ import {
   UpdateSubscriptionScheduleDto,
   ListRequestParamsDto,
   TestClockDto,
+  BaseSearchInvoiceDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -512,6 +513,19 @@ export class StripeService {
       };
     } catch (exception) {
       return this.handleError(exception, 'Get Price List');
+    }
+  }
+
+  async searchPrices(params?: BaseSearchInvoiceDto): Promise<BaseDataResponse<PriceDto[]>> {
+    try {
+      const dataList = await this.stripe.prices.search(params);
+      return {
+        success: true,
+        data: dataList.data?.map(i => this.priceToDto(i)),
+        hasMore: dataList.has_more,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Search Prices');
     }
   }
   //#endregion
@@ -987,6 +1001,19 @@ export class StripeService {
       };
     } catch (exception) {
       return this.handleError(exception, 'Get Invoice');
+    }
+  }
+
+  async searchInvoices(params?: BaseSearchInvoiceDto): Promise<BaseDataResponse<InvoiceDto[]>> {
+    try {
+      const dataList = await this.stripe.invoices.search(params);
+      return {
+        success: true,
+        data: dataList.data?.map(i => this.invoiceToDto(i)),
+        hasMore: dataList.has_more,
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Search Invoices');
     }
   }
   //#endregion

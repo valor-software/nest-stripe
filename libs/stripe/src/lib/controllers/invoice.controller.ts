@@ -6,10 +6,13 @@ import {
   Post,
   Body,
   Param,
-  Get} from '@nestjs/common';
+  Get,
+  Query,
+  Logger} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
+  BaseSearchInvoiceDto,
   InvoiceDto,
   InvoicePreviewDto,
   InvoicePreviewResponse
@@ -31,8 +34,15 @@ export class InvoiceController {
     return this.stripeService.getInvoiceById(invoiceId);
   }
 
+  @ApiResponse({ type: BaseDataResponse<InvoiceDto[]> })
+  @Get('search/invoices')
+  searchInvoices(
+    @Query() params: BaseSearchInvoiceDto
+  ): Promise<BaseDataResponse<InvoiceDto[]>> {
+    return this.stripeService.searchInvoices(params);
+  }
+
   @ApiResponse({ type: InvoicePreviewResponse })
-  @ApiTags('Stripe: Invoice')
   @Post('retrieve-upcoming')
   retrieveUpcomingInvoice(@Body() dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
     return this.stripeService.upcomingInvoicePreview(dto);
