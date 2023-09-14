@@ -282,9 +282,9 @@ export class StripeService {
     try {
       const paymentMethods = await this.stripe.customers.listPaymentMethods(customerId, {
         type,
-        limit: params.limit,
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
+        limit: params?.limit,
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
       });
       return {
         success: true,
@@ -300,9 +300,9 @@ export class StripeService {
     try {
       const invoices = await this.stripe.invoices.list({
         customer: customerId,
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
-        limit: params.limit,
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
+        limit: params?.limit,
       });
       return {
         success: true,
@@ -502,9 +502,9 @@ export class StripeService {
       const prices = await this.stripe.prices.list({
         product: productId,
         expand,
-        limit: params.limit,
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
+        limit: params?.limit,
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
       });
       return {
         success: true,
@@ -616,8 +616,8 @@ export class StripeService {
   async getProductList(params?: ListRequestParamsDto): Promise<BaseDataResponse<ProductDto[]>> {
     try {
       const productList = await this.stripe.products.list({
-        limit: params.limit,
-        starting_after: params.startingAfter
+        limit: params?.limit,
+        starting_after: params?.startingAfter
       });
       const products = productList.data.map((p) => this.productToDto(p));
       await Promise.all(products.map(async (p, i) => {
@@ -896,9 +896,9 @@ export class StripeService {
     try {
       const subscriptionItems = await this.stripe.subscriptionItems.list({
         subscription: subscriptionId,
-        limit: params.limit,
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
+        limit: params?.limit,
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
       })
       return {
         success: true,
@@ -946,9 +946,9 @@ export class StripeService {
   ): Promise<BaseDataResponse<Stripe.UsageRecordSummary[]>> {
     try {
       const usageRecordSummaries = await this.stripe.subscriptionItems.listUsageRecordSummaries(subscriptionItemId, {
-        limit: params.limit,
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
+        limit: params?.limit,
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
       })
       return {
         success: true,
@@ -1165,9 +1165,9 @@ export class StripeService {
       const quotes = await this.stripe.quotes.list({
         customer: customerId,
         status,
-        limit: params.limit,
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
+        limit: params?.limit,
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
       });
       return {
         success: true,
@@ -1281,9 +1281,9 @@ export class StripeService {
   async webhookEndpoints(params?: ListRequestParamsDto): Promise<BaseDataResponse<WebhookEndpointDto[]>> {
     try {
       const webhookEndpoints = await this.stripe.webhookEndpoints.list({
-        limit: params.limit,
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
+        limit: params?.limit,
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
       });
       return {
         success: true,
@@ -1400,9 +1400,9 @@ export class StripeService {
   async getTestClockList(params?: ListRequestParamsDto): Promise<BaseDataResponse<TestClockDto[]>> {
     try {
       const testClocks = await this.stripe.testHelpers.testClocks.list({
-        starting_after: params.startingAfter,
-        ending_before: params.endingBefore,
-        limit: params.limit
+        starting_after: params?.startingAfter,
+        ending_before: params?.endingBefore,
+        limit: params?.limit
       })
       return {
         success: true,
