@@ -749,8 +749,10 @@ export class StripeService {
           id: i.id,
           price: i.priceId,
           plan: i.planId,
-          quantity: i.quantity
-        })),
+          quantity: i.quantity,
+          deleted: i.deleted,
+          metadata: i.metadata,
+        } as Stripe.SubscriptionUpdateParams.Item)),
         add_invoice_items: dto.addInvoiceItems?.map(i => ({
           price: i.priceId,
           quantity:i.quantity,
@@ -1356,7 +1358,7 @@ export class StripeService {
   //#endregion
 
   //#region Test Clocks
-  async createTestClock(frozenTime: number = Date.now(), name = ''): Promise<BaseDataResponse<TestClockDto>> {
+  async createTestClock(frozenTime: number, name = ''): Promise<BaseDataResponse<TestClockDto>> {
     try {
       const testClock = await this.stripe.testHelpers.testClocks.create({
         name,
