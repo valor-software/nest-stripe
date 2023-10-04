@@ -8,14 +8,17 @@ import {
   Param,
   Get,
   Query,
-  Logger} from '@nestjs/common';
+  Logger,
+  Patch} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
   BaseSearchInvoiceDto,
   InvoiceDto,
+  InvoiceFinalizeInvoiceDto,
   InvoicePreviewDto,
-  InvoicePreviewResponse
+  InvoicePreviewResponse,
+  InvoiceVoidInvoiceDto
 } from '../dto';
 import { StripeAuthGuard } from '../stripe-auth.guard';
 import { StripeService } from '../stripe.service';
@@ -46,6 +49,24 @@ export class InvoiceController {
   @Post('retrieve-upcoming')
   retrieveUpcomingInvoice(@Body() dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
     return this.stripeService.upcomingInvoicePreview(dto);
+  }
+
+  @ApiResponse({ type: BaseDataResponse<InvoiceDto> })
+  @Patch(':invoiceId/void')
+  voidInvoice(
+    @Param('invoiceId') invoiceId: string,
+    @Body() dto: InvoiceVoidInvoiceDto
+  ): Promise<BaseDataResponse<InvoiceDto>> {
+    return this.stripeService.voidInvoice(invoiceId, dto);
+  }
+
+  @ApiResponse({ type: BaseDataResponse<InvoiceDto> })
+  @Patch(':invoiceId/finalize')
+  finalizeInvoice(
+    @Param('invoiceId') invoiceId: string,
+    @Body() dto: InvoiceFinalizeInvoiceDto
+  ): Promise<BaseDataResponse<InvoiceDto>> {
+    return this.stripeService.finalizeInvoice(invoiceId, dto);
   }
 
 }

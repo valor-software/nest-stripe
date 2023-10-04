@@ -59,6 +59,8 @@ import {
   ListRequestParamsDto,
   TestClockDto,
   BaseSearchInvoiceDto,
+  InvoiceVoidInvoiceDto,
+  InvoiceFinalizeInvoiceDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
@@ -1014,6 +1016,35 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Search Invoices');
+    }
+  }
+
+  async voidInvoice(id: string, dto: InvoiceVoidInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
+    try {
+      const invoice = await this.stripe.invoices.voidInvoice(id, {
+        expand: dto.expand
+      });
+      return {
+        success:  true,
+        data: this.invoiceToDto(invoice)
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Void Invoice');
+    }
+  }
+
+  async finalizeInvoice(id: string, dto: InvoiceFinalizeInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
+    try {
+      const invoice = await this.stripe.invoices.finalizeInvoice(id, {
+        auto_advance: dto.autoAdvance,
+        expand: dto.expand
+      });
+      return {
+        success:  true,
+        data: this.invoiceToDto(invoice)
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Finalize Invoice');
     }
   }
   //#endregion
