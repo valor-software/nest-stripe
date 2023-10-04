@@ -21,6 +21,7 @@ export * from './update-product.dto';
 export * from './update-customer.dto';
 export * from './save-webhook-endpoint.dto';
 export * from './save-test-clock.dto';
+export * from './update-invoice.dto';
 
 export * from './stripe/customer.dto';
 export * from './stripe/subscription-item.dto';
