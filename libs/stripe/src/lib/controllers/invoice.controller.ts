@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
+  BaseResponse,
   BaseSearchInvoiceDto,
   InvoiceDto,
   InvoiceFinalizeInvoiceDto,
@@ -22,6 +23,7 @@ import {
 } from '../dto';
 import { StripeAuthGuard } from '../stripe-auth.guard';
 import { StripeService } from '../stripe.service';
+import { CreateInvoiceDto } from '../dto/create-invoice.dto';
 
 @ApiBearerAuth()
 @ApiTags('Stripe: Invoice')
@@ -49,6 +51,12 @@ export class InvoiceController {
   @Post('retrieve-upcoming')
   retrieveUpcomingInvoice(@Body() dto: InvoicePreviewDto): Promise<InvoicePreviewResponse> {
     return this.stripeService.upcomingInvoicePreview(dto);
+  }
+
+  @ApiResponse({ type: BaseDataResponse<InvoiceDto> })
+  @Post('')
+  createInvoice(@Body() dto: CreateInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
+    return this.stripeService.createInvoice(dto);
   }
 
   @ApiResponse({ type: BaseDataResponse<InvoiceDto> })

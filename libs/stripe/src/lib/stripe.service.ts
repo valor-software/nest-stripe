@@ -64,6 +64,7 @@ import {
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 @Injectable()
 export class StripeService {
@@ -993,6 +994,36 @@ export class StripeService {
       }
     } catch (exception) {
       return this.handleError(exception, 'Invoice Preview');
+    }
+  }
+
+  async createInvoice(dto: CreateInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
+    try {
+      const invoice = await this.stripe.invoices.create({
+        account_tax_ids: dto.accountTaxIds,
+        application_fee_amount: dto.applicationFeeAmount,
+        auto_advance: dto.autoAdvance,
+        automatic_tax: dto.automaticTax != null ? { enabled: dto.automaticTax } : undefined,
+        collection_method: dto.collectionMethod,
+        currency: dto.currency,
+        custom_fields: dto.customFields,
+        customer: dto.customer,
+        days_until_due: dto.daysUntilDue,
+        default_payment_method: dto.defaultPaymentMethodId,
+        default_source: dto.defaultSource,
+        default_tax_rates: dto.defaultTaxRates,
+        description: dto.description,
+        discounts: dto.discounts,
+        due_date: dto.dueDate,
+        pending_invoice_items_behavior: dto.pendingInvoiceItemsBehavior,
+        subscription: dto.subscription,
+      });
+      return {
+        success: true,
+        data: this.invoiceToDto(invoice)
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Invoice Create');
     }
   }
 

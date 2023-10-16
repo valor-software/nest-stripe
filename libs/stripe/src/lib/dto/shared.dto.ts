@@ -189,3 +189,19 @@ export class DobDto {
   @ApiProperty()
   year: number | null;
 }
+
+export class DiscountDto {
+  @ApiPropertyOptional({
+    description: 'ID of the coupon to create a new discount for.'
+  })
+  coupon?: string;
+
+  @ApiProperty({
+    description: 'ID of an existing discount on the object (or one of its ancestors) to reuse.'
+  })
+  discount?: string;
+}
+
+export class MetadataDto {
+  [name: string]: string | number | null;
+}
