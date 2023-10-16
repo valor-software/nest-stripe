@@ -60,6 +60,15 @@ export class SubscriptionUpdateItemDto {
   @IsOptional()
   @IsPositive()
   quantity?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  deleted?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  metadata?: Stripe.MetadataParam;
 }
 
 export class SubscriptionUpdateBillingThresholdsDto {
