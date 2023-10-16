@@ -1,17 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import Stripe from 'stripe';
-
-export class DiscountDto {
-  @ApiPropertyOptional({
-    description: 'ID of the coupon to create a new discount for.'
-  })
-  coupon?: string;
-
-  @ApiPropertyOptional({
-    description: 'ID of an existing discount on the object (or one of its ancestors) to reuse.'
-  })
-  discount?: string;
-}
+import { DiscountDto } from './shared.dto';
 
 export class FromQuoteDto {
   @ApiPropertyOptional({
