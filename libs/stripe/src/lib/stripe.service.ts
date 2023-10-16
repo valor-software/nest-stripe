@@ -1015,6 +1015,12 @@ export class StripeService {
         description: dto.description,
         discounts: dto.discounts,
         due_date: dto.dueDate,
+        expand: dto.expand,
+        footer: dto.footer,
+        from_invoice: dto.fromInvoice ? {
+          action: 'revision',
+          invoice: dto.fromInvoice
+        } : undefined,
         pending_invoice_items_behavior: dto.pendingInvoiceItemsBehavior,
         subscription: dto.subscription,
       });

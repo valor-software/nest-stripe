@@ -1,6 +1,6 @@
 {
   "name": "@valor/nestjs-stripe",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "type": "commonjs",
   "private": false,
   "author": "opavlovskyi-valor-software",
