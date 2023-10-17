@@ -22,6 +22,8 @@ export * from './update-customer.dto';
 export * from './save-webhook-endpoint.dto';
 export * from './save-test-clock.dto';
 export * from './update-invoice.dto';
+export * from './create-invoice.dto';
+export * from './create-invoice-item.dto';
 
 export * from './stripe/customer.dto';
 export * from './stripe/subscription-item.dto';
@@ -29,6 +31,7 @@ export * from './stripe/subscription.dto';
 export * from './subscription-schedule.dto';
 export * from './stripe/invoice-line-item.dto';
 export * from './stripe/invoice.dto';
+export * from './stripe/invoice-item.dto';
 export * from './stripe/usage-record.dto';
 export * from './stripe/plan.dto';
 export * from './stripe/price.dto';
