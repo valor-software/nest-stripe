@@ -8,12 +8,10 @@ import {
   Param,
   Get,
   Query,
-  Logger,
   Patch} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import {
   BaseDataResponse,
-  BaseResponse,
   BaseSearchInvoiceDto,
   InvoiceDto,
   InvoiceFinalizeInvoiceDto,
@@ -75,6 +73,14 @@ export class InvoiceController {
     @Body() dto: InvoiceFinalizeInvoiceDto
   ): Promise<BaseDataResponse<InvoiceDto>> {
     return this.stripeService.finalizeInvoice(invoiceId, dto);
+  }
+
+  @ApiResponse({ type: BaseDataResponse<InvoiceDto> })
+  @Patch(':invoiceId/send')
+  sendInvoice(
+    @Param('invoiceId') invoiceId: string,
+  ): Promise<BaseDataResponse<InvoiceDto>> {
+    return this.stripeService.sendInvoice(invoiceId);
   }
 
 }

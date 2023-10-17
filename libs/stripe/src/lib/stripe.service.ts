@@ -61,10 +61,13 @@ import {
   BaseSearchInvoiceDto,
   InvoiceVoidInvoiceDto,
   InvoiceFinalizeInvoiceDto,
+  CreateInvoiceDto,
+  CreateInvoiceItemDto,
+  InvoiceItemDto,
+  DiscountDto,
 } from './dto';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
 import { StripeLogger } from './stripe.logger';
-import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 @Injectable()
 export class StripeService {
@@ -1058,7 +1061,7 @@ export class StripeService {
     }
   }
 
-  async voidInvoice(id: string, dto: InvoiceVoidInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
+  async voidInvoice(id: string, dto?: InvoiceVoidInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
     try {
       const invoice = await this.stripe.invoices.voidInvoice(id, {
         expand: dto.expand
@@ -1072,7 +1075,7 @@ export class StripeService {
     }
   }
 
-  async finalizeInvoice(id: string, dto: InvoiceFinalizeInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
+  async finalizeInvoice(id: string, dto?: InvoiceFinalizeInvoiceDto): Promise<BaseDataResponse<InvoiceDto>> {
     try {
       const invoice = await this.stripe.invoices.finalizeInvoice(id, {
         auto_advance: dto.autoAdvance,
@@ -1085,6 +1088,55 @@ export class StripeService {
     } catch (exception) {
       return this.handleError(exception, 'Finalize Invoice');
     }
+  }
+
+  async sendInvoice(id: string): Promise<BaseDataResponse<InvoiceDto>> {
+    try {
+      const invoice = await this.stripe.invoices.sendInvoice(id);
+      return {
+        success:  true,
+        data: this.invoiceToDto(invoice)
+      };
+    } catch (exception) {
+      return this.handleError(exception, 'Sand Invoice');
+    }
+  }
+
+  async createInvoiceItem(invoiceId: string, dto: CreateInvoiceItemDto): Promise<BaseDataResponse<InvoiceItemDto>> {
+    try {
+      const invoiceItem = await this.stripe.invoiceItems.create({
+        amount: dto.amount,
+        currency: dto.currency,
+        customer: dto.customer,
+        description: dto.description,
+        discountable: dto.discountable,
+        discounts: dto.discounts,
+        expand: dto.expand,
+        invoice: dto.invoice,
+        period: dto.period,
+        price: dto.price,
+        price_data: dto.priceData ? {
+          currency: dto.priceData.currency,
+          product: dto.priceData.product,
+          tax_behavior: dto.priceData.taxBehavior,
+          unit_amount: dto.priceData.unitAmount,
+          unit_amount_decimal: dto.priceData.unitAmountDecimal
+        } : undefined,
+        quantity: dto.quantity,
+        subscription: dto.subscription,
+        tax_behavior: dto.taxBehavior,
+        tax_code: dto.taxCode,
+        tax_rates: dto.taxRates,
+        unit_amount: dto.unitAmount,
+        unit_amount_decimal: dto.unitAmountDecimal,
+      });
+      return {
+        success: true,
+        data: this.invoiceItemToDto(invoiceItem as Stripe.InvoiceItem),
+      }
+    } catch (exception) {
+      return this.handleError(exception, 'Invoice Item Create');
+    } 
   }
   //#endregion
 
@@ -1658,6 +1710,39 @@ export class StripeService {
       taxRates: item.tax_rates,
       type: item.type,
       unitAmountExcludingTax: item.unit_amount_excluding_tax
+    }
+  }
+
+  private invoiceItemToDto(item: Stripe.InvoiceItem): InvoiceItemDto {
+    if (!item) {
+      return item as undefined | null;
+    }
+    return {
+      id: item.id,
+      object: item.object,
+      amount: item.amount,
+      currency: item.currency,
+      customerId: stripeObjId(item.customer),
+      customer: this.customerToDto(item.customer as Stripe.Customer),
+      date: item.date && new Date(item.date * 1000),
+      description: item.description,
+      discountable: item.discountable,
+      discountIds: item.discounts?.map(d => stripeObjId(d)),
+      discounts: item.discounts?.map(d => d as DiscountDto)?.filter(d => d?.coupon || d?.discount),
+      liveMode: item.livemode,
+      metadata: item.metadata,
+      invoiceId: stripeObjId(item.invoice),
+      invoice: this.invoiceToDto(item.invoice as Stripe.Invoice),
+      period: item.period,
+      plan: item.plan ? this.planToDto(item.plan) : null,
+      price: item.price ? this.priceToDto(item.price) : null,
+      proration: item.proration,
+      quantity: item.quantity,
+      subscriptionId: stripeObjId(item.subscription),
+      subscriptionItemId: stripeObjId(item.subscription_item),
+      taxRates: item.tax_rates?.map(tr => tr as unknown as string),
+      unitAmount: item.unit_amount,
+      unitAmountDecimal: item.unit_amount_decimal
     }
   }
 
