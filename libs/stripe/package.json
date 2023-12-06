@@ -3,7 +3,6 @@
   "version": "0.0.17",
   "type": "commonjs",
   "private": false,
-  "author": "opavlovskyi-valor-software",
   "license": "ISC",
   "description": "Stripe service with DTO's and Swagger for nestjs projects. Include Webhooks listeners and Event enums.",
   "repository": {

@@ -71,14 +71,16 @@ import { StripeLogger } from './stripe.logger';
 
 @Injectable()
 export class StripeService {
-  protected stripe: Stripe = new Stripe(this.config.apiKey, {
-    apiVersion: '2022-11-15'
-  });
+  protected readonly stripe!: Stripe;
 
   constructor(
     @Inject(STRIPE_CONFIG) protected readonly config: StripeConfig,
     private readonly logger: StripeLogger
-  ) {}
+  ) {
+    this.stripe = new Stripe(this.config.apiKey, {
+      apiVersion: '2022-11-15'
+    });
+  }
 
   //#region Payment Intent
   async createPaymentIntent(dto: CreatePaymentIntentDto): Promise<PaymentIntentResponse> {
@@ -1112,7 +1114,7 @@ export class StripeService {
         discountable: dto.discountable,
         discounts: dto.discounts,
         expand: dto.expand,
-        invoice: dto.invoice,
+        invoice: invoiceId|| dto.invoice,
         period: dto.period,
         price: dto.price,
         price_data: dto.priceData ? {
