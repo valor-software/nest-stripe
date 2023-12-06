@@ -1,4 +1,6 @@
 {
+  "name": "stripe",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/stripe/src",
   "targets": {
     "build": {

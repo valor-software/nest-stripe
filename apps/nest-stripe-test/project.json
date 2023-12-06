@@ -1,4 +1,6 @@
 {
+  "name": "nest-stripe-test",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/nest-stripe-test/src",
   "projectType": "application",
   "targets": {

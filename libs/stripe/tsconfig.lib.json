@@ -2,9 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
+    "sourceMap": false,
     "declaration": true,
     "types": [],
-    "target": "es6"
+    "target": "ES2022"
   },
   "include": ["**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"]

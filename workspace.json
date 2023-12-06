@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "projects": {
-    "nest-stripe-test": "apps/nest-stripe-test",
-    "stripe": "libs/stripe"
-  }
-}
