@@ -215,6 +215,7 @@ export class StripeService {
         phone: dto.phone,
         address: this.addressFromDto(dto.address),
         invoice_prefix: dto.invoicePrefix,
+        invoice_settings: dto.defaultPaymentMethod ? { default_payment_method: dto.defaultPaymentMethod } : undefined,
         metadata:dto.metadata,
         preferred_locales: dto.preferredLocales,
         promotion_code: dto.promotionCode,

@@ -88,4 +88,9 @@ export class UpdateCustomerDto {
   @IsOptional()
   @IsEnum(['exempt', 'none', 'reverse'])
   taxExempt?: 'exempt' | 'none' | 'reverse';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  defaultPaymentMethod?: string;
 }
