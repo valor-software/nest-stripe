@@ -68,7 +68,7 @@ export class StripeModule {
   static forRoot(config: StripeConfig, authGuard: Type<CanActivate>): DynamicModule {
     return {
       module: StripeModule,
-      controllers: controllerList,
+      // controllers: controllerList,
       providers: [
         {
           provide: STRIPE_CONFIG,
