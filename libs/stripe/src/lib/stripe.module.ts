@@ -60,7 +60,7 @@ export interface StripeConfigAsyncOptions
 }
 
 @Module({
-  controllers: controllerList,
+  // controllers: controllerList,
   providers: providerList,
   exports: exportList,
 })
