@@ -1,41 +1,41 @@
 import { CanActivate, DynamicModule, Module, ModuleMetadata, Provider, Type, } from '@nestjs/common';
 import { STRIPE_AUTH_GUARD } from './stripe-auth.guard';
 import { StripeConfig, STRIPE_CONFIG } from './stripe.config';
-import { StripeController } from './stripe.controller';
+// import { StripeController } from './stripe.controller';
 import { StripeLogger } from './stripe.logger';
 import { StripeService } from './stripe.service';
 import { WebhookController } from './webhook/webhook.controller';
 import { WebhookService } from './webhook/webhook.service';
-import {
-  CheckoutSessionController,
-  CustomerController,
-  PaymentIntentController,
-  PaymentMethodController,
-  PriceController,
-  ProductController,
-  SubscriptionController,
-  InvoiceController,
-  UsageRecordController,
-  QuotesController,
-  SubscriptionScheduleController,
-} from './controllers';
-import { TestClocksController } from './controllers/test-clock.controller';
+// import {
+//   CheckoutSessionController,
+//   CustomerController,
+//   PaymentIntentController,
+//   PaymentMethodController,
+//   PriceController,
+//   ProductController,
+//   SubscriptionController,
+//   InvoiceController,
+//   UsageRecordController,
+//   QuotesController,
+//   SubscriptionScheduleController,
+// } from './controllers';
+// import { TestClocksController } from './controllers/test-clock.controller';
 
 const controllerList = [
-  PaymentIntentController,
-  CheckoutSessionController,
-  CustomerController,
-  PaymentMethodController,
-  PriceController,
-  ProductController,
-  SubscriptionController,
-  SubscriptionScheduleController,
-  InvoiceController,
-  UsageRecordController,
-  QuotesController,
-  TestClocksController,
+  // PaymentIntentController,
+  // CheckoutSessionController,
+  // CustomerController,
+  // PaymentMethodController,
+  // PriceController,
+  // ProductController,
+  // SubscriptionController,
+  // SubscriptionScheduleController,
+  // InvoiceController,
+  // UsageRecordController,
+  // QuotesController,
+  // TestClocksController,
 
-  StripeController,
+  // StripeController,
   WebhookController
 ];
 const providerList = [StripeService, StripeLogger, WebhookService];
@@ -60,7 +60,7 @@ export interface StripeConfigAsyncOptions
 }
 
 @Module({
-  // controllers: controllerList,
+  controllers: controllerList,
   providers: providerList,
   exports: exportList,
 })
@@ -68,7 +68,7 @@ export class StripeModule {
   static forRoot(config: StripeConfig, authGuard: Type<CanActivate>): DynamicModule {
     return {
       module: StripeModule,
-      // controllers: controllerList,
+      controllers: controllerList,
       providers: [
         {
           provide: STRIPE_CONFIG,
