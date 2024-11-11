@@ -13,7 +13,8 @@ import {
   UseFilters,
   UseGuards,
   UsePipes,
-  ValidationPipe
+  ValidationPipe,
+  SetMetadata
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -35,6 +36,7 @@ import { WebhookExceptionFilter } from './webhook.exception.filter';
 import { WebhookResponse } from './webhook.interfaces';
 import { WebhookService } from './webhook.service';
 
+@SetMetadata('isPublic', true)
 @ApiTags('Stripe: Webhooks')
 @Controller('stripe/webhooks')
 @UseFilters(new WebhookExceptionFilter())
