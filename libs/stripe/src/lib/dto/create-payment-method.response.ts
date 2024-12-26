@@ -5,3 +5,4 @@ export class CreatePaymentMethodResponse extends BaseResponse {
   @ApiPropertyOptional()
   paymentMethodId?: string;
 }
+
