@@ -85,7 +85,7 @@ export class InvoiceLineItemDto extends BaseDto {
   })
   taxAmounts?: Array<TaxAmountDto>;
 
-  @ApiProperty({ isArray: true })
+  @ApiProperty({ isArray: true, type: Object })
   taxRates?: Array<Stripe.TaxRate>;
 
   @ApiProperty({

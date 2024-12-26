@@ -222,7 +222,7 @@ export class FpxDto {
 
   @ApiProperty({
     description: 'The customer\'s bank.',
-    enum: [FpxBanks]
+    enum: FpxBanks
   })
   bank: Stripe.PaymentMethodCreateParams.Fpx.Bank;
 }
@@ -432,7 +432,7 @@ export class CreatePaymentMethodDto {
 
   @ApiPropertyOptional({
     description: 'The type of the PaymentMethod. An additional hash is included on the PaymentMethod with a name matching this value. It contains additional information specific to the PaymentMethod type.',
-    enum: [PaymentMethodTypes],
+    enum: PaymentMethodTypes,
     default: 'card'
   })
   type?: Stripe.PaymentMethodCreateParams.Type;

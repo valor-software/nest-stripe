@@ -32,7 +32,7 @@ export class PlanDto extends BaseDto {
   @ApiProperty()
   product: string | ProductDto | null;
 
-  @ApiProperty({ isArray: true })
+  @ApiProperty({ isArray: true, type: Object })
   tiers?: Array<Stripe.Plan.Tier>;
 
   @ApiProperty({ enum: ['graduated', 'volume']})
