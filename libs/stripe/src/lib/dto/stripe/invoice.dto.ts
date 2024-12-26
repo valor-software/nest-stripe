@@ -274,7 +274,7 @@ export class InvoiceDto extends BaseDto {
   automaticTax: AutomaticTaxDto;
 
   @ApiProperty({
-    enum: [BillingReasons]
+    enum: BillingReasons
   })
   billingReason: Stripe.Invoice.BillingReason | null;
 
